@@ -23,6 +23,7 @@ test("owner invites an individual staff account and removal updates its open wor
     page.getByRole("heading", { name: "Team Cafe", exact: true })
   ).toBeVisible()
   const trial = await page.getByTestId("trial-end").textContent()
+  await page.goto("/workspace/staff")
   await page.getByLabel("Staff email", { exact: true }).fill(email)
   await page.getByRole("button", { name: "Invite staff", exact: true }).click()
   let invitation = ""
@@ -62,6 +63,43 @@ test("owner invites an individual staff account and removal updates its open wor
       staff.getByRole("button", { name: "Invite staff", exact: true })
     ).toHaveCount(0)
     await expect(staff.getByTestId("trial-end")).toHaveCount(0)
+    await staff
+      .getByRole("button", { name: "Toggle sidebar", exact: true })
+      .click()
+    const navigation = staff.getByRole("navigation", {
+      name: "Workspace",
+      exact: true,
+    })
+    await expect(
+      navigation.getByRole("link", { name: "Staff", exact: true })
+    ).toHaveCount(0)
+    await expect(
+      navigation.getByRole("link", { name: "Subscription", exact: true })
+    ).toHaveCount(0)
+    await navigation.getByRole("link", { name: "Menu", exact: true }).click()
+    await staff.goto("http://localhost:3000/workspace/staff")
+    await expect(
+      staff.getByText("This page is available to the store owner.", {
+        exact: true,
+      })
+    ).toBeVisible()
+    await expect(
+      staff.getByRole("button", { name: "Invite staff", exact: true })
+    ).toHaveCount(0)
+    await staff.goto("http://localhost:3000/workspace/subscription")
+    await expect(
+      staff.getByText("This page is available to the store owner.", {
+        exact: true,
+      })
+    ).toBeVisible()
+    await expect(staff.getByTestId("trial-end")).toHaveCount(0)
+    await staff.goto("http://localhost:3000/workspace/menu")
+    await expect(
+      staff.getByRole("region", { name: "Menu preview", exact: true })
+    ).toBeVisible()
+    await expect(
+      staff.getByLabel("Category name", { exact: true })
+    ).toHaveCount(0)
     await expect(page.getByText(email, { exact: true })).toHaveCount(2)
     await page
       .getByRole("button", { name: "Remove access", exact: true })
@@ -78,8 +116,9 @@ test("owner invites an individual staff account and removal updates its open wor
     await expect(
       staff.getByRole("button", { name: "Create store", exact: true })
     ).toHaveCount(0)
+    await page.goto("/workspace")
     await expect(page.getByTestId("trial-end")).toHaveText(trial!)
-    await staff.getByRole("button", { name: "Sign out", exact: true }).click()
+    await signOut(staff)
     await staff.getByLabel("Email", { exact: true }).fill(email)
     await staff.getByLabel("Password", { exact: true }).fill("CafePassword42!")
     await staff.getByRole("button", { name: "Sign in", exact: true }).click()
@@ -121,7 +160,7 @@ test("an existing individual account accepts its invitation and recovers its sta
     await expect(
       staff.getByRole("button", { name: "Create store", exact: true })
     ).toBeVisible()
-    await staff.getByRole("button", { name: "Sign out", exact: true }).click()
+    await signOut(staff)
     await createOwner(page)
     await page.getByLabel("Staff email", { exact: true }).fill(email)
     await page
@@ -144,7 +183,7 @@ test("an existing individual account accepts its invitation and recovers its sta
     await expect(
       staff.getByText("Staff access is active.", { exact: true })
     ).toBeVisible()
-    await staff.getByRole("button", { name: "Sign out", exact: true }).click()
+    await signOut(staff)
     await staff.getByRole("link", { name: "Forgot your password?" }).click()
     await expect(staff).toHaveURL(/\/forgot-password$/)
     await staff.getByLabel("Email", { exact: true }).fill(email)
@@ -314,6 +353,7 @@ async function createOwner(page: import("@playwright/test").Page) {
   await expect(
     page.getByRole("heading", { name: "ဝန်ထမ်း Team Cafe", exact: true })
   ).toBeVisible()
+  await page.goto("/workspace/staff")
 }
 
 async function emailLink(
@@ -337,4 +377,9 @@ async function emailLink(
     })
     .not.toBe("")
   return url
+}
+
+async function signOut(page: import("@playwright/test").Page) {
+  await page.getByRole("button", { name: "Account", exact: true }).click()
+  await page.getByRole("menuitem", { name: "Sign out", exact: true }).click()
 }

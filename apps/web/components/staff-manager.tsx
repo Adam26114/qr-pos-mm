@@ -82,7 +82,7 @@ export function StaffManager({
       timeZone: "Asia/Yangon",
     }).format(value)
   return (
-    <section className="mt-10 space-y-6" aria-label={copy.staffTeam}>
+    <section className="space-y-6" aria-label={copy.staffTeam}>
       <FormCard title={copy.staffTeam} description={copy.staffTeamIntro}>
         <form onSubmit={handleSubmit(submit)} noValidate>
           <FieldSet disabled={!isReady || isSubmitting || !connected}>

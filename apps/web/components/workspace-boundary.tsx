@@ -9,8 +9,15 @@ import { useSignOut } from "@/lib/use-sign-out"
 import { Workspace } from "./workspace"
 import { useCopy } from "./language-switcher"
 import { LoadingState } from "@workspace/ui/composed/loading-state"
+import type { ReactNode } from "react"
 
-export function WorkspaceBoundary() {
+export function WorkspaceBoundary({
+  children,
+  defaultSidebarOpen,
+}: {
+  children: ReactNode
+  defaultSidebarOpen: boolean
+}) {
   const router = useRouter()
   const { copy } = useCopy()
   const { signingOut, failure, signOut } = useSignOut("/login")
@@ -32,7 +39,13 @@ export function WorkspaceBoundary() {
         router.refresh()
       }}
     >
-      <Workspace onSignOut={signOut} signOutFailed={failure} />
+      <Workspace
+        onSignOut={signOut}
+        signOutFailed={failure}
+        defaultSidebarOpen={defaultSidebarOpen}
+      >
+        {children}
+      </Workspace>
     </AuthBoundary>
   )
 }

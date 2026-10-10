@@ -85,6 +85,14 @@ The following approved choices translate the confirmed scope into implementable 
 - Redux holds transient UI state, such as an unsent cart and local selections. Never copy Convex query results into Redux. React Hook Form and Zod validate forms, with all relevant validation repeated at the backend trust boundary.
 - Build responsive web experiences for guest phones and owner/staff phone, tablet, and desktop browsers. Domain responsibilities are accounts/access, catalog/tables, ordering/fulfillment, payments/refunds, subscription access, and reporting; keep their public operations narrow without introducing extra services.
 
+### Workspace dashboard
+
+- Compose the workspace from reusable shadcn/ui components, inspired by the sidebar and inset content layout of [dashboard-01](https://ui.shadcn.com/blocks#dashboard-01).
+- Use a collapsible sidebar with separate Overview, Menu, Staff, and Subscription pages. Staff see Overview and their read-only Menu; owner-only destinations remain protected on direct visits.
+- Keep a compact header with language and account controls. Preserve the green theme, with light, dark, and system appearance choices.
+- Initially show live menu item, availability, category, and owner-only staff counts. Add sales and order summaries when those features exist; do not substitute demo financial data.
+- Keep store creation and removed-staff feedback within the protected workspace. Subscription shows the saved trial and monthly plan until verified MMQR renewal is implemented.
+
 ### Accounts, stores, and permissions
 
 - Atomically create one store and owner membership per owner, with a single durable trial start. Retrying creation returns the existing result. Staff invitation acceptance does not create a store or a trial.

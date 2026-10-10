@@ -51,11 +51,11 @@ export function MenuManager({
     disabled: !connected,
   }
   return (
-    <section aria-label={copy.menuManagement} className="mt-10 space-y-6">
+    <section aria-label={copy.menuManagement} className="space-y-6">
       <div>
-        <h2 className="font-heading text-2xl font-semibold">
+        <h1 className="font-heading text-3xl font-semibold">
           {copy.menuManagement}
-        </h2>
+        </h1>
         <p className="mt-2 text-sm text-muted-foreground">{copy.menuIntro}</p>
       </div>
       <div className="grid items-start gap-6 lg:grid-cols-2">
@@ -246,7 +246,7 @@ export function StaffMenu({ storeId }: { storeId: Id<"stores"> }) {
   const { copy } = useCopy()
   const menu = useQuery(api.menu.view, { storeId })
   return (
-    <div className="mt-8">
+    <div className="space-y-6">
       {menu ? (
         <MenuPreview menu={menu} />
       ) : (

@@ -26,7 +26,7 @@ test("owner registers, creates one store, and retains the trial after signing in
   })
   await page.reload()
   await expect(page.getByTestId("trial-end")).toHaveText(trialDate!)
-  await page.getByRole("button", { name: "Sign out", exact: true }).click()
+  await signOut(page)
   await expect(page).toHaveURL(/\/login$/)
   await page.getByLabel("Email", { exact: true }).fill(email)
   await page.getByLabel("Password", { exact: true }).fill("CafePassword42!")
@@ -56,7 +56,7 @@ test("owner recovers a password through captured email and reset links are singl
     page.getByRole("heading", { name: "Recovery Cafe" })
   ).toBeVisible()
   const trialDate = await page.getByTestId("trial-end").textContent()
-  await page.getByRole("button", { name: "Sign out", exact: true }).click()
+  await signOut(page)
   await page.getByRole("link", { name: "Forgot your password?" }).click()
   await expect(page).toHaveURL(/\/forgot-password$/)
   await expect(
@@ -247,3 +247,8 @@ test("backend disconnection disables store creation while the device remains onl
     page.getByRole("heading", { name: "Connected Cafe", exact: true })
   ).toBeVisible()
 })
+
+async function signOut(page: import("@playwright/test").Page) {
+  await page.getByRole("button", { name: "Account", exact: true }).click()
+  await page.getByRole("menuitem", { name: "Sign out", exact: true }).click()
+}

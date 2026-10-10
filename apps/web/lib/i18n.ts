@@ -1,6 +1,28 @@
 export type Language = "en" | "my"
 
 const en = {
+  overview: "Overview",
+  menu: "Menu",
+  subscription: "Subscription",
+  toggleSidebar: "Toggle sidebar",
+  navigationIntro: "Navigate your store workspace.",
+  appearance: "Appearance",
+  lightTheme: "Light",
+  darkTheme: "Dark",
+  systemTheme: "System",
+  ownerOnly: "This page is available to the store owner.",
+  overviewIntro: "Your menu and team, updated live.",
+  activeMenuNote: "Items in your current menu",
+  availableMenuNote: "Ready for customers to order",
+  categoriesNote: "Categories in your current menu",
+  activeStaffNote: "Staff with access to your store",
+  manageMenu: "Manage menu",
+  viewMenu: "View menu",
+  manageStaff: "Manage staff",
+  subscriptionIntro: "Your trial and monthly plan.",
+  renewalPending:
+    "MMQR subscription renewal will be available once payment integration is ready.",
+
   choosePhoto: "Choose photo",
   noPhotoChosen: "No photo selected.",
   currentPhoto: "Current photo",
@@ -175,6 +197,28 @@ const en = {
 }
 
 const my: Record<keyof typeof en, string> = {
+  overview: "ခြုံငုံကြည့်ရန်",
+  menu: "မီနူး",
+  subscription: "ဝန်ဆောင်မှုသက်တမ်း",
+  toggleSidebar: "ဘေးမီနူး ဖွင့်/ပိတ်",
+  navigationIntro: "သင့်ဆိုင်၏ လုပ်ငန်းစာမျက်နှာများသို့ သွားပါ။",
+  appearance: "အသွင်အပြင်",
+  lightTheme: "အလင်း",
+  darkTheme: "အမှောင်",
+  systemTheme: "စက်စနစ်အတိုင်း",
+  ownerOnly: "ဤစာမျက်နှာကို ဆိုင်ပိုင်ရှင်သာ အသုံးပြုနိုင်ပါသည်။",
+  overviewIntro: "သင့်မီနူးနှင့် ဝန်ထမ်းအချက်အလက်များကို ချက်ချင်းပြသပါသည်။",
+  activeMenuNote: "လက်ရှိမီနူးတွင် ပါဝင်သည့်ပစ္စည်းများ",
+  availableMenuNote: "ဖောက်သည်များ မှာယူနိုင်သည့်ပစ္စည်းများ",
+  categoriesNote: "လက်ရှိမီနူး အမျိုးအစားများ",
+  activeStaffNote: "သင့်ဆိုင်သို့ ဝင်ရောက်ခွင့်ရှိသော ဝန်ထမ်းများ",
+  manageMenu: "မီနူးစီမံမည်",
+  viewMenu: "မီနူးကြည့်မည်",
+  manageStaff: "ဝန်ထမ်းစီမံမည်",
+  subscriptionIntro: "သင့်အစမ်းသုံးကာလနှင့် လစဉ်အစီအစဉ်။",
+  renewalPending:
+    "ငွေပေးချေမှုစနစ် အဆင်သင့်ဖြစ်သည့်အခါ MMQR ဖြင့် ဝန်ဆောင်မှုသက်တမ်း တိုးနိုင်ပါမည်။",
+
   choosePhoto: "ဓာတ်ပုံရွေးမည်",
   noPhotoChosen: "ဓာတ်ပုံ မရွေးထားပါ။",
   currentPhoto: "လက်ရှိဓာတ်ပုံ",

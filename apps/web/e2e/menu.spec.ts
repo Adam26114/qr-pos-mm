@@ -15,6 +15,8 @@ test("owner creates, edits and removes a persistent menu with verbatim Burmese c
     .click()
   await page.getByLabel("Store name", { exact: true }).fill("Menu Cafe")
   await page.getByRole("button", { name: "Create store", exact: true }).click()
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Cafe/)
+  await page.goto("/workspace/menu")
   await page.getByLabel("Category name", { exact: true }).fill("ကော်ဖီ Coffee")
   await page.getByRole("button", { name: "Add category", exact: true }).click()
   await page.getByLabel("Item name", { exact: true }).fill("လက်ဖက်ရည် Tea")
@@ -100,6 +102,8 @@ test("photos persist and live menu updates reach another owner session on Burmes
     .click()
   await page.getByLabel("Store name", { exact: true }).fill("Photo Cafe")
   await page.getByRole("button", { name: "Create store", exact: true }).click()
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Cafe/)
+  await page.goto("/workspace/menu")
   await page.getByLabel("Category name", { exact: true }).fill("မုန့် Food")
   await page.getByRole("button", { name: "Add category", exact: true }).click()
   await page.getByRole("button", { name: "Add item", exact: true }).click()
@@ -173,7 +177,7 @@ test("photos persist and live menu updates reach another owner session on Burmes
   try {
     const observer = await observerContext.newPage()
     observer.on("pageerror", (error) => errors.push(error.message))
-    await observer.goto("http://localhost:3000/workspace")
+    await observer.goto("http://localhost:3000/workspace/menu")
     const observerPreview = observer.getByRole("region", {
       name: "မီနူးအစမ်းကြည့်ရန်",
       exact: true,
