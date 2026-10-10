@@ -14,7 +14,7 @@ import { MetricCard } from "@workspace/ui/composed/metric-card"
 import { LoadingState } from "@workspace/ui/composed/loading-state"
 import { useWorkspace } from "./workspace"
 import { useCopy } from "./language-switcher"
-import { MenuManager, StaffMenu } from "./menu-manager"
+import { MenuManager } from "./menu-manager"
 import { StaffManager } from "./staff-manager"
 import { WorkspaceSubscription } from "./workspace-subscription"
 
@@ -109,15 +109,13 @@ export function WorkspaceOverview() {
 
 export function WorkspaceMenu() {
   const { workspace, connected } = useWorkspace()
-  const { copy } = useCopy()
   if (!workspace.store) return null
-  return workspace.accountKind === "owner" ? (
-    <MenuManager storeId={workspace.store._id} connected={connected} />
-  ) : (
-    <>
-      <h1 className="font-heading text-3xl font-semibold">{copy.menu}</h1>
-      <StaffMenu storeId={workspace.store._id} />
-    </>
+  return (
+    <MenuManager
+      storeId={workspace.store._id}
+      connected={connected}
+      owner={workspace.accountKind === "owner"}
+    />
   )
 }
 

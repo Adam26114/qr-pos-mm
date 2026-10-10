@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useMutation } from "convex/react"
+import { useConvex, useMutation } from "convex/react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -21,14 +21,21 @@ export function MenuCategoryEditor({
   storeId,
   category,
   connected,
-  onDone,
+  onSaved,
+  onCancel,
+  embedded = false,
+  onPendingChange,
 }: {
   storeId: Id<"stores">
   category?: MenuCategory
   connected: boolean
-  onDone: () => void
+  onSaved: () => void
+  onCancel: () => void
+  embedded?: boolean
+  onPendingChange?: (pending: boolean) => void
 }) {
   const { copy } = useCopy()
+  const client = useConvex()
   const save = useMutation(api.menu.saveCategory)
   const [failure, setFailure] = useState<MessageKey | null>(null)
   const [saved, setSaved] = useState(false)
@@ -49,20 +56,28 @@ export function MenuCategoryEditor({
     defaultValues: { name: category?.name ?? "" },
   })
   async function submit(values: { name: string }) {
-    if (!connected) return
+    if (
+      !connected ||
+      !navigator.onLine ||
+      !client.connectionState().isWebSocketConnected
+    )
+      return
     setFailure(null)
     setSaved(false)
+    onPendingChange?.(true)
     try {
       await save({ storeId, categoryId: category?._id, ...values })
       reset({ name: "" })
       setSaved(true)
-      onDone()
+      onSaved()
     } catch (error) {
       setFailure(menuError(error))
+    } finally {
+      onPendingChange?.(false)
     }
   }
-  return (
-    <FormCard title={category ? copy.editCategory : copy.addCategory}>
+  const content = (
+    <>
       <form onSubmit={handleSubmit(submit)} noValidate>
         <FieldSet disabled={!isReady || isSubmitting || !connected}>
           <TextField
@@ -83,13 +98,22 @@ export function MenuCategoryEditor({
             {copy[failure]}
           </Feedback>
         )}
-        {saved && <Feedback className="mt-4">{copy.categorySaved}</Feedback>}
+        {saved && !embedded && (
+          <Feedback className="mt-4">{copy.categorySaved}</Feedback>
+        )}
       </form>
       {category && (
-        <Button variant="outline" disabled={isSubmitting} onClick={onDone}>
+        <Button variant="outline" disabled={isSubmitting} onClick={onCancel}>
           {copy.cancelEditing}
         </Button>
       )}
+    </>
+  )
+  return embedded ? (
+    content
+  ) : (
+    <FormCard title={category ? copy.editCategory : copy.addCategory}>
+      {content}
     </FormCard>
   )
 }

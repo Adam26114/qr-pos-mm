@@ -57,7 +57,7 @@ export const workspace = query({
       (member) => member.revokedAt === undefined
     )
     const store = membership ? await ctx.db.get(membership.storeId) : null
-    const userInfo = { name: user.name, email: user.email }
+    const userInfo = { _id: user._id, name: user.name, email: user.email }
     if (membership?.role === "staff")
       return {
         user: userInfo,

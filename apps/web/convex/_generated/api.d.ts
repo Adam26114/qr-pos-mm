@@ -11,11 +11,14 @@
 import type * as auth from "../auth.js";
 import type * as email from "../email.js";
 import type * as http from "../http.js";
+import type * as lib_order_values from "../lib/order_values.js";
 import type * as lib_store_access from "../lib/store_access.js";
 import type * as menu from "../menu.js";
 import type * as menu_photos from "../menu_photos.js";
+import type * as orders from "../orders.js";
 import type * as staff from "../staff.js";
 import type * as stores from "../stores.js";
+import type * as tables from "../tables.js";
 
 import type {
   ApiFromModules,
@@ -27,11 +30,14 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   email: typeof email;
   http: typeof http;
+  "lib/order_values": typeof lib_order_values;
   "lib/store_access": typeof lib_store_access;
   menu: typeof menu;
   menu_photos: typeof menu_photos;
+  orders: typeof orders;
   staff: typeof staff;
   stores: typeof stores;
+  tables: typeof tables;
 }>;
 
 /**

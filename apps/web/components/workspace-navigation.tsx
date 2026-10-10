@@ -1,5 +1,6 @@
 "use client"
 
+import { usePosCopy } from "@/lib/pos-copy"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { HugeiconsIcon } from "@hugeicons/react"
@@ -48,6 +49,7 @@ export function WorkspaceNavigation({
   storeName?: string
 }) {
   const { copy } = useCopy()
+  const pos = usePosCopy()
   const pathname = usePathname()
   const { setOpenMobile } = useSidebar()
   const items = [
@@ -58,6 +60,11 @@ export function WorkspaceNavigation({
             href: "/workspace/menu",
             label: copy.menu,
             icon: MenuRestaurantIcon,
+          },
+          {
+            href: "/workspace/orders",
+            label: pos.orders,
+            icon: DashboardSquare01Icon,
           },
           ...(owner
             ? [

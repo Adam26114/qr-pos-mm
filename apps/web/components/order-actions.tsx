@@ -1,0 +1,155 @@
+"use client"
+import { useState } from "react"
+import { useMutation, useQuery } from "convex/react"
+import type { FunctionReturnType } from "convex/server"
+import { Button } from "@workspace/ui/components/button"
+import { Field, FieldLabel } from "@workspace/ui/components/field"
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@workspace/ui/components/select"
+import { SubmitButton } from "@workspace/ui/composed/submit-button"
+import { ConfirmAction } from "@workspace/ui/composed/confirm-action"
+import { Feedback } from "@workspace/ui/composed/feedback"
+import { api } from "@/convex/_generated/api"
+import type { Id } from "@/convex/_generated/dataModel"
+import { formatMMK } from "@/lib/menu"
+import { usePosCopy } from "@/lib/pos-copy"
+import { usePosCommand } from "@/lib/use-pos-command"
+import { useCopy } from "./language-switcher"
+
+type Order = FunctionReturnType<typeof api.orders.queue>[number]
+export function OrderActions({
+  order,
+  checkout = false,
+}: {
+  order: Order
+  checkout?: boolean
+}) {
+  const pos = usePosCopy()
+  const { copy } = useCopy()
+  const action = usePosCommand()
+  const recordCash = useMutation(api.orders.recordCash)
+  const assign = useMutation(api.orders.assignDestination)
+  const cook = useMutation(api.orders.startCooking)
+  const serve = useMutation(api.orders.markServed)
+  const data = useQuery(api.tables.list, { storeId: order.storeId })
+  const [selected, setSelected] = useState<string | null>(null)
+  const [correcting, setCorrecting] = useState(false)
+  const command = { storeId: order.storeId, orderId: order._id }
+  const id = `destination-${order._id}`
+  const options = [
+    { value: "takeaway", label: pos.takeaway },
+    ...(data?.tables ?? []).map((table) => ({
+      value: table._id,
+      label: `${pos.table} ${table.number}`,
+    })),
+  ]
+  return (
+    <div className="space-y-3">
+      {!order.payment && (
+        <ConfirmAction
+          label={pos.paymentReceived}
+          title={pos.cashTitle}
+          description={`${pos.cashIntro} ${formatMMK(order.total)}`}
+          cancelLabel={copy.keepAccess}
+          pendingLabel={copy.working}
+          failureMessage={copy.requestFailed}
+          disabled={!action.connected}
+          onConfirm={async () => {
+            if (!action.ready()) throw new Error("Disconnected")
+            await recordCash(command)
+          }}
+        />
+      )}
+      {order.payment && (!order.destination || correcting) && (
+        <>
+          <Field>
+            <FieldLabel htmlFor={id}>{pos.destination}</FieldLabel>
+            <Select
+              value={selected}
+              onValueChange={setSelected}
+              items={options}
+              disabled={!action.connected || action.pending}
+            >
+              <SelectTrigger id={id} className="w-full">
+                <SelectValue placeholder={pos.chooseDestination} />
+              </SelectTrigger>
+              <SelectContent>
+                {options.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+          <SubmitButton
+            type="button"
+            pending={action.pending}
+            pendingLabel={copy.working}
+            disabled={
+              !selected ||
+              !action.connected ||
+              !options.some((option) => option.value === selected)
+            }
+            onClick={() =>
+              action.run(async () => {
+                await assign({
+                  ...command,
+                  destination:
+                    selected === "takeaway"
+                      ? { kind: "takeaway" }
+                      : { kind: "table", tableId: selected as Id<"tables"> },
+                })
+                setCorrecting(false)
+              })
+            }
+          >
+            {pos.assignDestination}
+          </SubmitButton>
+        </>
+      )}
+      {order.payment && order.destination && !correcting && (
+        <Button
+          variant="outline"
+          disabled={!action.connected || action.pending}
+          onClick={() => {
+            setSelected(null)
+            setCorrecting(true)
+          }}
+        >
+          {pos.correctDestination}
+        </Button>
+      )}
+      {!checkout && order.status === "pending" && (
+        <SubmitButton
+          type="button"
+          pending={action.pending}
+          pendingLabel={copy.working}
+          disabled={!order.payment || !order.destination || !action.connected}
+          onClick={() => action.run(() => cook(command))}
+        >
+          {pos.startCooking}
+        </SubmitButton>
+      )}
+      {!checkout && order.status === "cooking" && (
+        <SubmitButton
+          type="button"
+          pending={action.pending}
+          pendingLabel={copy.working}
+          disabled={!action.connected}
+          onClick={() => action.run(() => serve(command))}
+        >
+          {order.destination?.kind === "takeaway"
+            ? pos.handover
+            : pos.markServed}
+        </SubmitButton>
+      )}
+      {action.failure && <Feedback tone="error">{action.failure}</Feedback>}
+    </div>
+  )
+}

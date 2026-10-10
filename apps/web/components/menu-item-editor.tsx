@@ -49,13 +49,19 @@ export function MenuItemEditor({
   item,
   categories,
   connected,
-  onDone,
+  onSaved,
+  onCancel,
+  embedded = false,
+  onPendingChange,
 }: {
   storeId: Id<"stores">
   item?: MenuItem
   categories: MenuCategory[]
   connected: boolean
-  onDone: () => void
+  onSaved: () => void
+  onCancel: () => void
+  embedded?: boolean
+  onPendingChange?: (pending: boolean) => void
 }) {
   const { copy } = useCopy()
   const client = useConvex()
@@ -107,6 +113,7 @@ export function MenuItemEditor({
       return
     setFailure(null)
     setSaved(false)
+    onPendingChange?.(true)
     try {
       let photoId = removePhoto ? null : (item?.photoId ?? null)
       if (file) {
@@ -156,13 +163,15 @@ export function MenuItemEditor({
       setRemovePhoto(false)
       if (fileInput.current) fileInput.current.value = ""
       setSaved(true)
-      onDone()
+      onSaved()
     } catch (error) {
       setFailure(menuError(error))
+    } finally {
+      onPendingChange?.(false)
     }
   }
-  return (
-    <FormCard title={item ? copy.editItem : copy.addItem}>
+  const content = (
+    <>
       <form onSubmit={handleSubmit(submit)} noValidate>
         <FieldSet disabled={disabled}>
           <TextField
@@ -347,13 +356,20 @@ export function MenuItemEditor({
             {copy[failure]}
           </Feedback>
         )}
-        {saved && <Feedback className="mt-4">{copy.itemSaved}</Feedback>}
+        {saved && !embedded && (
+          <Feedback className="mt-4">{copy.itemSaved}</Feedback>
+        )}
       </form>
       {item && (
-        <Button variant="outline" disabled={isSubmitting} onClick={onDone}>
+        <Button variant="outline" disabled={isSubmitting} onClick={onCancel}>
           {copy.cancelEditing}
         </Button>
       )}
-    </FormCard>
+    </>
+  )
+  return embedded ? (
+    content
+  ) : (
+    <FormCard title={item ? copy.editItem : copy.addItem}>{content}</FormCard>
   )
 }

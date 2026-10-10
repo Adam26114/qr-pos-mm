@@ -1,5 +1,6 @@
 "use client"
 
+import { usePosCopy } from "@/lib/pos-copy"
 import { createContext, useContext, type ReactNode } from "react"
 import { useConvexAuth, useConvexConnectionState, useQuery } from "convex/react"
 import type { FunctionReturnType } from "convex/server"
@@ -44,6 +45,7 @@ export function Workspace({
   children: ReactNode
 }) {
   const { copy } = useCopy()
+  const pos = usePosCopy()
   const pathname = usePathname()
   const online = useOnline()
   const connection = useConvexConnectionState()
@@ -61,13 +63,15 @@ export function Workspace({
     )
   const owner = workspace.accountKind === "owner"
   const title =
-    pathname === "/workspace/menu"
-      ? copy.menu
-      : pathname === "/workspace/staff"
-        ? copy.staffTeam
-        : pathname === "/workspace/subscription"
-          ? copy.subscription
-          : copy.overview
+    pathname === "/workspace/orders"
+      ? pos.orders
+      : pathname === "/workspace/menu"
+        ? copy.menu
+        : pathname === "/workspace/staff"
+          ? copy.staffTeam
+          : pathname === "/workspace/subscription"
+            ? copy.subscription
+            : copy.overview
   const privatePage =
     pathname === "/workspace/staff" || pathname === "/workspace/subscription"
   return (

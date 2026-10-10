@@ -17,14 +17,23 @@ test("owner creates, edits and removes a persistent menu with verbatim Burmese c
   await page.getByRole("button", { name: "Create store", exact: true }).click()
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Cafe/)
   await page.goto("/workspace/menu")
+  await page.getByRole("button", { name: "Categories", exact: true }).click()
   await page.getByLabel("Category name", { exact: true }).fill("ကော်ဖီ Coffee")
   await page.getByRole("button", { name: "Add category", exact: true }).click()
+  await page
+    .getByRole("dialog", { name: "Categories", exact: true })
+    .getByRole("button", { name: "Close", exact: true })
+    .click()
+  await page.getByRole("button", { name: "Add item", exact: true }).click()
   await page.getByLabel("Item name", { exact: true }).fill("လက်ဖက်ရည် Tea")
   await page
     .getByLabel("Description", { exact: true })
     .fill("နို့ပါသည် · With milk")
   await page.getByLabel("Price (MMK)", { exact: true }).fill("2500")
-  await page.getByRole("button", { name: "Add item", exact: true }).click()
+  await page
+    .getByRole("dialog", { name: "Add item", exact: true })
+    .getByRole("button", { name: "Add item", exact: true })
+    .click()
   const preview = page.getByRole("region", {
     name: "Menu preview",
     exact: true,
@@ -50,6 +59,9 @@ test("owner creates, edits and removes a persistent menu with verbatim Burmese c
   await expect(preview.getByText("Unavailable", { exact: true })).toBeVisible()
   await page.getByRole("button", { name: "မြန်မာ", exact: true }).click()
   await expect(
+    page.getByText("မီနူးပစ္စည်း သိမ်းပြီးပါပြီ။", { exact: true })
+  ).toBeVisible()
+  await expect(
     page
       .getByRole("region", { name: "မီနူးအစမ်းကြည့်ရန်", exact: true })
       .getByText("လက်ဖက်ရည် Tea", { exact: true })
@@ -70,12 +82,17 @@ test("owner creates, edits and removes a persistent menu with verbatim Burmese c
       .getByRole("region", { name: "Removed items", exact: true })
       .getByText("လက်ဖက်ရည် Tea", { exact: true })
   ).toBeVisible()
+  await page.getByRole("button", { name: "Categories", exact: true }).click()
   await page
     .getByRole("button", { name: "Remove category", exact: true })
     .click()
   await page
     .getByRole("alertdialog")
     .getByRole("button", { name: "Remove category", exact: true })
+    .click()
+  await page
+    .getByRole("dialog", { name: "Categories", exact: true })
+    .getByRole("button", { name: "Close", exact: true })
     .click()
   await expect(
     page.getByRole("button", { name: "Edit category", exact: true })
@@ -104,13 +121,33 @@ test("photos persist and live menu updates reach another owner session on Burmes
   await page.getByRole("button", { name: "Create store", exact: true }).click()
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Cafe/)
   await page.goto("/workspace/menu")
+  await page.getByRole("button", { name: "Categories", exact: true }).click()
   await page.getByLabel("Category name", { exact: true }).fill("မုန့် Food")
   await page.getByRole("button", { name: "Add category", exact: true }).click()
+  await page
+    .getByRole("dialog", { name: "Categories", exact: true })
+    .getByRole("button", { name: "Close", exact: true })
+    .click()
   await page.getByRole("button", { name: "Add item", exact: true }).click()
+  await page
+    .getByRole("dialog", { name: "Add item", exact: true })
+    .getByRole("button", { name: "Add item", exact: true })
+    .click()
   await expect(
     page.getByText("Enter a positive whole-MMK price.", { exact: true })
   ).toBeVisible()
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Close", exact: true })
+    .click()
   await page.getByRole("button", { name: "မြန်မာ", exact: true }).click()
+  await page
+    .getByRole("button", { name: "ပစ္စည်းထည့်မည်", exact: true })
+    .click()
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "ပစ္စည်းထည့်မည်", exact: true })
+    .click()
   await expect(
     page.getByText("သုညထက်ကြီးသော ကျပ်ပြည့် ဈေးနှုန်းကို ထည့်ပါ။", {
       exact: true,
@@ -119,6 +156,7 @@ test("photos persist and live menu updates reach another owner session on Burmes
   await page.getByLabel("ပစ္စည်းအမည်", { exact: true }).fill("မုန့် Toast")
   await page.getByLabel("ဈေးနှုန်း (ကျပ်)", { exact: true }).fill("1500.5")
   await page
+    .getByRole("dialog")
     .getByRole("button", { name: "ပစ္စည်းထည့်မည်", exact: true })
     .click()
   await expect(
@@ -139,6 +177,7 @@ test("photos persist and live menu updates reach another owner session on Burmes
     buffer: Buffer.from("This is not a photo"),
   })
   await page
+    .getByRole("dialog")
     .getByRole("button", { name: "ပစ္စည်းထည့်မည်", exact: true })
     .click()
   await expect(
@@ -154,6 +193,7 @@ test("photos persist and live menu updates reach another owner session on Burmes
     .getByLabel("ဓာတ်ပုံ", { exact: true })
     .setInputFiles({ name: "toast.png", mimeType: "image/png", buffer: png })
   await page
+    .getByRole("dialog")
     .getByRole("button", { name: "ပစ္စည်းထည့်မည်", exact: true })
     .click()
   const preview = page.getByRole("region", {
@@ -186,6 +226,9 @@ test("photos persist and live menu updates reach another owner session on Burmes
       observerPreview.getByRole("img", { name: "မုန့် Toast", exact: true })
     ).toBeVisible()
     await page
+      .getByRole("button", { name: "အမျိုးအစားများ", exact: true })
+      .click()
+    await page
       .getByRole("button", { name: "အမျိုးအစားပြင်မည်", exact: true })
       .click()
     await page
@@ -194,8 +237,12 @@ test("photos persist and live menu updates reach another owner session on Burmes
     await page
       .getByRole("button", { name: "အမျိုးအစားသိမ်းမည်", exact: true })
       .click()
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "ပိတ်မည်", exact: true })
+      .click()
     await expect(
-      observerPreview.getByRole("heading", {
+      observerPreview.getByRole("button", {
         name: "မနက်စာ Breakfast",
         exact: true,
       })

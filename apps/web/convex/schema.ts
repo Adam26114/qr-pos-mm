@@ -1,7 +1,63 @@
 import { defineSchema, defineTable } from "convex/server"
 import { v } from "convex/values"
+import { destination } from "./lib/order_values"
 
 export default defineSchema({
+  tables: defineTable({
+    storeId: v.id("stores"),
+    number: v.number(),
+    removedAt: v.optional(v.number()),
+  }).index("by_store", ["storeId"]),
+  orders: defineTable({
+    storeId: v.id("stores"),
+    createdBy: v.string(),
+    submissionKey: v.string(),
+    payload: v.string(),
+    createdAt: v.number(),
+    source: v.literal("counter"),
+    lines: v.array(
+      v.object({
+        itemId: v.id("menuItems"),
+        name: v.string(),
+        unitPrice: v.number(),
+        quantity: v.number(),
+      })
+    ),
+    note: v.string(),
+    total: v.number(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("cooking"),
+      v.literal("served")
+    ),
+    destination: v.union(destination, v.null()),
+    cookingAt: v.optional(v.number()),
+    servedAt: v.optional(v.number()),
+  })
+    .index("by_submission", ["storeId", "createdBy", "submissionKey"])
+    .index("by_store_status", ["storeId", "status"]),
+  cashPayments: defineTable({
+    storeId: v.id("stores"),
+    orderId: v.id("orders"),
+    amount: v.number(),
+    receivedAt: v.number(),
+    recordedBy: v.string(),
+  }).index("by_order", ["orderId"]),
+  orderEvents: defineTable({
+    storeId: v.id("stores"),
+    orderId: v.id("orders"),
+    actorId: v.string(),
+    actorName: v.string(),
+    at: v.number(),
+    kind: v.union(
+      v.literal("cash_received"),
+      v.literal("destination_changed"),
+      v.literal("cooking"),
+      v.literal("served")
+    ),
+    previousDestination: v.optional(v.union(destination, v.null())),
+    destination: v.optional(destination),
+  }).index("by_order", ["orderId"]),
   stores: defineTable({
     name: v.string(),
     ownerId: v.string(),

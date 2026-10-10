@@ -33,11 +33,20 @@ test("dashboard navigation, live summary, theme and subscription survive reloads
   ).toHaveAttribute("aria-expanded", "false")
   await page.getByRole("link", { name: "Menu", exact: true }).click()
   await expect(page).toHaveURL(/\/workspace\/menu$/)
+  await page.getByRole("button", { name: "Categories", exact: true }).click()
   await page.getByLabel("Category name", { exact: true }).fill("ကော်ဖီ Coffee")
   await page.getByRole("button", { name: "Add category", exact: true }).click()
+  await page
+    .getByRole("dialog", { name: "Categories", exact: true })
+    .getByRole("button", { name: "Close", exact: true })
+    .click()
+  await page.getByRole("button", { name: "Add item", exact: true }).click()
   await page.getByLabel("Item name", { exact: true }).fill("လက်ဖက်ရည် Tea")
   await page.getByLabel("Price (MMK)", { exact: true }).fill("2500")
-  await page.getByRole("button", { name: "Add item", exact: true }).click()
+  await page
+    .getByRole("dialog", { name: "Add item", exact: true })
+    .getByRole("button", { name: "Add item", exact: true })
+    .click()
   await expect(
     page.getByText("Menu item saved.", { exact: true })
   ).toBeVisible()
