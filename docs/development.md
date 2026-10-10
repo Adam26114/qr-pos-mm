@@ -24,6 +24,16 @@ Check that `.env.local` contains `NEXT_PUBLIC_CONVEX_URL=http://127.0.0.1:3210` 
 
 From the repository root, run `bun run dev`. Open http://localhost:3000/register to create an account, then create its store. The trial starts at store creation and lasts exactly fourteen days. Sign-in and signup use email/password; customers will not need accounts in later slices.
 
+## Hosted development
+
+The localhost app can use a hosted Convex development deployment. This machine keeps the selected cloud configuration in `apps/web/.env.local`, a saved cloud profile in `.env.cloud.local`, and the previous local test profile in `.env.local-backend`. These files are private and Git-ignored. `.env.cloud-backend` holds the private settings used to initialize cloud authentication; do not commit it or print its values.
+
+Start the frontend with `bun run dev` at the repository root. In another terminal, run `bun run convex:dev` from `apps/web` to watch and deploy backend changes to the selected development deployment. The cloud backend has its own database and file storage; local accounts, menu photos and orders are not automatically transferred. Create an owner account in the cloud-backed app to begin using it.
+
+Set `SITE_URL=http://localhost:3000` and a random `BETTER_AUTH_SECRET` on the hosted development backend. Real email delivery also requires `RESEND_API_KEY` and `AUTH_EMAIL_FROM` for a verified sender, set privately through Convex Deployment Settings or the CLI. Keep `DEV_EMAIL_CAPTURE_URL` unset on hosted deployments: the loopback capture server is available only to the local test backend. Until the email provider is configured, registration/password login can work, but invitations and password-reset emails cannot be delivered. See [Convex environment variables](https://docs.convex.dev/production/environment-variables).
+
+For the full browser suite, stop the frontend and cloud watcher, then from `apps/web` copy `.env.local-backend` to `.env.local`. Start the local backend using the earlier instructions and run `bun run test:e2e`. The existing test guard deliberately refuses cloud URLs. After testing, stop the local processes, copy `.env.cloud.local` back to `.env.local`, and restart the frontend and cloud watcher. Changing profiles requires restarting processes; copying a file does not migrate any database data.
+
 ## Tests
 
 ```bash
