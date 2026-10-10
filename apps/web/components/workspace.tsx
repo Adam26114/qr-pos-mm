@@ -26,6 +26,7 @@ import { Feedback } from "@workspace/ui/composed/feedback"
 import { FormCard } from "@workspace/ui/composed/form-card"
 import { SubmitButton } from "@workspace/ui/composed/submit-button"
 import { LoadingState } from "@workspace/ui/composed/loading-state"
+import { StaffManager } from "./staff-manager"
 import { api } from "@/convex/_generated/api"
 import { LanguageSwitcher, useCopy } from "./language-switcher"
 import { useOnline } from "@/lib/use-online"
@@ -109,11 +110,16 @@ export function Workspace({
         ) : (
           <>
             <p className="text-xs font-semibold tracking-widest text-primary uppercase">
-              {copy.ownerWorkspace}
+              {workspace.accountKind === "staff"
+                ? copy.staffWorkspace
+                : copy.ownerWorkspace}
             </p>
             <div className="mt-3 flex flex-wrap items-end justify-between gap-5">
               <h1 className="font-heading text-3xl font-semibold tracking-tight [overflow-wrap:anywhere] sm:text-4xl">
-                {workspace.store?.name ?? copy.createStoreTitle}
+                {workspace.store?.name ??
+                  (workspace.accountKind === "staff"
+                    ? copy.staffAccessRemoved
+                    : copy.createStoreTitle)}
               </h1>
               <p className="text-sm break-all text-muted-foreground">
                 {workspace.user.name} · {workspace.user.email}
@@ -124,7 +130,24 @@ export function Workspace({
                 {copy.requestFailed}
               </Feedback>
             )}
-            {!workspace.store ? (
+            {workspace.accountKind === "staff" ? (
+              <Card className="mt-10">
+                <CardHeader>
+                  <CardTitle>
+                    <h2>
+                      {workspace.store
+                        ? copy.staffReady
+                        : copy.staffAccessRemoved}
+                    </h2>
+                  </CardTitle>
+                  <CardDescription>
+                    {workspace.store
+                      ? copy.staffReadyIntro
+                      : copy.staffAccessRemovedIntro}
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            ) : !workspace.store ? (
               <FormCard
                 className="mt-10 max-w-2xl"
                 title={copy.trialPromise}
@@ -218,6 +241,12 @@ export function Workspace({
                   </CardHeader>
                 </Card>
               </div>
+            )}
+            {workspace.accountKind === "owner" && workspace.store && (
+              <StaffManager
+                storeId={workspace.store._id}
+                connected={canSubmit}
+              />
             )}
           </>
         )}

@@ -11,9 +11,10 @@ The owner's chosen approach is to build reusable product UI on top of shadcn/ui.
 Use the existing shared patterns first:
 
 - `TextField`: Field, label, Input, optional description, and accessible validation error. It forwards native input props and refs so React Hook Form can register it directly.
-- `SubmitButton`: Button, a decorative Spinner, pending label, busy state, and disabled state.
+- `SubmitButton`: Button, a decorative Spinner, pending label, busy state, and disabled state. Defaults to form submission; pass `type="button"` for an asynchronous action outside a form.
 - `Feedback`: Alert and its description, with assertive error or polite status semantics.
 - `FormCard`: Card header, heading, description, content, and optional footer for account and onboarding forms.
+- `ConfirmAction`: AlertDialog with an accessible title/description, cancel action, pending command, and failure feedback. Keeps the confirmation open if the command fails. Callers provide all copy and the authorized command.
 - `LoadingState`: Card, localized status text, and decorative Skeletons.
 
 ## Composition rules

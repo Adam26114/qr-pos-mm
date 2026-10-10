@@ -21,14 +21,31 @@ export async function requireStoreMembership(
   storeId: Id<"stores">
 ) {
   const user = await authComponent.getAuthUser(ctx)
-  const membership = await ctx.db
+  const memberships = await ctx.db
     .query("memberships")
     .withIndex("by_store_user", (q) =>
       q.eq("storeId", storeId).eq("userId", user._id)
     )
-    .unique()
+    .collect()
+  const membership = memberships.find(
+    (member) => member.revokedAt === undefined
+  )
   if (!membership) throw new ConvexError("STORE_ACCESS_DENIED")
   const store = await ctx.db.get(storeId)
   if (!store) throw new ConvexError("STORE_ACCESS_DENIED")
   return { user, membership, store }
+}
+
+export async function membershipsForUser(ctx: QueryCtx, userId: string) {
+  return await ctx.db
+    .query("memberships")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .collect()
+}
+
+export async function requireStoreOwner(ctx: QueryCtx, storeId: Id<"stores">) {
+  const access = await requireStoreMembership(ctx, storeId)
+  if (access.membership.role !== "owner")
+    throw new ConvexError("OWNER_REQUIRED")
+  return access
 }

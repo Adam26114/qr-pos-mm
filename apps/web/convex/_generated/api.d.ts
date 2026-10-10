@@ -12,6 +12,7 @@ import type * as auth from "../auth.js";
 import type * as email from "../email.js";
 import type * as http from "../http.js";
 import type * as lib_store_access from "../lib/store_access.js";
+import type * as staff from "../staff.js";
 import type * as stores from "../stores.js";
 
 import type {
@@ -25,6 +26,7 @@ declare const fullApi: ApiFromModules<{
   email: typeof email;
   http: typeof http;
   "lib/store_access": typeof lib_store_access;
+  staff: typeof staff;
   stores: typeof stores;
 }>;
 

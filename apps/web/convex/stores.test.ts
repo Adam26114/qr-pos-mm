@@ -1,49 +1,6 @@
-import { convexTest } from "convex-test"
-import { register } from "@convex-dev/better-auth/test"
 import { afterEach, expect, test, vi } from "vitest"
 import { api, components } from "./_generated/api"
-import schema from "./schema"
-
-const modules = import.meta.glob("./**/*.ts")
-
-function backend() {
-  const t = convexTest(schema, modules)
-  register(t)
-  return t
-}
-
-async function authenticate(
-  t: ReturnType<typeof backend>,
-  email: string,
-  signUp = true
-) {
-  const response = await t.fetch(
-    signUp ? "/api/auth/sign-up/email" : "/api/auth/sign-in/email",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Origin: "http://localhost:3000",
-      },
-      body: JSON.stringify({
-        name: "Cafe owner",
-        email,
-        password: "CafePassword42!",
-      }),
-    }
-  )
-  expect(response.status).toBe(200)
-  const account = (await response.json()) as {
-    token: string
-    user: { id: string }
-  }
-  const session = await t.query(components.betterAuth.adapter.findOne, {
-    model: "session",
-    where: [{ field: "token", value: account.token }],
-  })
-  if (!session) throw new Error("Registration did not create a session")
-  return t.withIdentity({ subject: account.user.id, sessionId: session._id })
-}
+import { backend, authenticate } from "../test/convex"
 
 afterEach(() => vi.useRealTimers())
 

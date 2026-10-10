@@ -5,12 +5,13 @@ import { Button } from "@workspace/ui/components/button"
 import { Spinner } from "@workspace/ui/components/spinner"
 import { cn } from "@workspace/ui/lib/utils"
 
-type SubmitButtonProps = Omit<ComponentProps<typeof Button>, "type"> & {
+type SubmitButtonProps = ComponentProps<typeof Button> & {
   pending: boolean
   pendingLabel: ReactNode
 }
 
 export function SubmitButton({
+  type = "submit",
   pending,
   pendingLabel,
   disabled,
@@ -21,7 +22,7 @@ export function SubmitButton({
   return (
     <Button
       {...props}
-      type="submit"
+      type={type}
       disabled={disabled || pending}
       aria-busy={pending}
       className={cn("h-12 w-full rounded-xl", className)}

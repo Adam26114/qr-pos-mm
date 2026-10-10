@@ -5,6 +5,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
+import { Button } from "@workspace/ui/components/button"
 import { FieldSet } from "@workspace/ui/components/field"
 import { TextField } from "@workspace/ui/composed/text-field"
 import { Feedback } from "@workspace/ui/composed/feedback"
@@ -23,7 +24,17 @@ type Fields = {
   confirmPassword: string
 }
 
-export function AuthForm({ mode, token }: { mode: Mode; token?: string }) {
+export function AuthForm({
+  mode,
+  token,
+  invitation,
+  onModeChange,
+}: {
+  mode: Mode
+  token?: string
+  invitation?: { token: string; email: string }
+  onModeChange?: (mode: "register" | "login") => void
+}) {
   const { copy } = useCopy()
   const online = useOnline()
   const [notice, setNotice] = useState<MessageKey | null>(null)
@@ -73,16 +84,21 @@ export function AuthForm({ mode, token }: { mode: Mode; token?: string }) {
     formState: { errors, isSubmitting, isReady },
   } = useForm<Fields>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
+    defaultValues: {
+      name: "",
+      email: invitation?.email ?? "",
+      password: "",
+      confirmPassword: "",
+    },
   })
   const title = {
-    register: copy.registerTitle,
+    register: invitation ? copy.staffRegisterTitle : copy.registerTitle,
     login: copy.loginTitle,
     forgot: copy.forgotTitle,
     reset: copy.resetTitle,
   }[mode]
   const intro = {
-    register: copy.registerIntro,
+    register: invitation ? copy.staffRegisterIntro : copy.registerIntro,
     login: copy.loginIntro,
     forgot: copy.forgotIntro,
     reset: copy.resetIntro,
@@ -149,7 +165,11 @@ export function AuthForm({ mode, token }: { mode: Mode; token?: string }) {
         return
       }
       // Start a fresh authenticated client so prior session callbacks cannot redirect it.
-      window.location.replace("/workspace")
+      window.location.replace(
+        invitation && /^[a-f0-9]{64}$/.test(invitation.token)
+          ? `/invite/${invitation.token}`
+          : "/workspace"
+      )
     } catch {
       setFailure("requestFailed")
     }
@@ -221,8 +241,24 @@ export function AuthForm({ mode, token }: { mode: Mode; token?: string }) {
     <FormCard
       title={title}
       description={intro}
-      eyebrow={copy.ownerAccount}
-      footer={footer}
+      eyebrow={invitation ? copy.staffAccount : copy.ownerAccount}
+      footer={
+        invitation ? (
+          <p>
+            {mode === "register" ? copy.haveAccount : copy.newAccount}{" "}
+            <Button
+              variant="link"
+              onClick={() =>
+                onModeChange?.(mode === "register" ? "login" : "register")
+              }
+            >
+              {mode === "register" ? copy.signIn : copy.createAccount}
+            </Button>
+          </p>
+        ) : (
+          footer
+        )
+      }
     >
       <form onSubmit={handleSubmit(submit)} noValidate className="space-y-5">
         {!online && <Feedback>{copy.offline}</Feedback>}
@@ -234,6 +270,7 @@ export function AuthForm({ mode, token }: { mode: Mode; token?: string }) {
               label={field.label}
               type={field.type}
               autoComplete={field.autoComplete}
+              readOnly={!!invitation && field.key === "email"}
               {...register(field.key)}
               error={
                 errors[field.key]

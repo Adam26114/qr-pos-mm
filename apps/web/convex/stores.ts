@@ -2,7 +2,11 @@ import { internalMutation, mutation, query } from "./_generated/server"
 import { internal } from "./_generated/api"
 import { ConvexError, v } from "convex/values"
 import { authComponent } from "./auth"
-import { requireStoreMembership, storeEntitlement } from "./lib/store_access"
+import {
+  membershipsForUser,
+  requireStoreOwner,
+  storeEntitlement,
+} from "./lib/store_access"
 
 export const create = mutation({
   args: { name: v.string() },
@@ -13,10 +17,12 @@ export const create = mutation({
     if (name.length < 2 || name.length > 80) {
       throw new ConvexError("INVALID_STORE_NAME")
     }
-    const membership = await ctx.db
-      .query("memberships")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
-      .unique()
+    const memberships = await membershipsForUser(ctx, user._id)
+    if (memberships.some((member) => member.role === "staff"))
+      throw new ConvexError("OWNER_REQUIRED")
+    const membership = memberships.find(
+      (member) => member.revokedAt === undefined
+    )
     if (membership) {
       if (membership.role !== "owner") throw new ConvexError("OWNER_REQUIRED")
       return membership.storeId
@@ -46,14 +52,26 @@ export const workspace = query({
   args: {},
   handler: async (ctx) => {
     const user = await authComponent.getAuthUser(ctx)
-    const membership = await ctx.db
-      .query("memberships")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
-      .unique()
+    const memberships = await membershipsForUser(ctx, user._id)
+    const membership = memberships.find(
+      (member) => member.revokedAt === undefined
+    )
     const store = membership ? await ctx.db.get(membership.storeId) : null
+    const userInfo = { name: user.name, email: user.email }
+    if (membership?.role === "staff")
+      return {
+        user: userInfo,
+        role: "staff" as const,
+        accountKind: "staff" as const,
+        store: store ? { _id: store._id, name: store.name } : null,
+        access: null,
+      }
     return {
-      user: { name: user.name, email: user.email },
+      user: userInfo,
       role: membership?.role ?? null,
+      accountKind: memberships.some((member) => member.role === "staff")
+        ? ("staff" as const)
+        : ("owner" as const),
       store,
       access: store ? storeEntitlement(store) : null,
     }
@@ -63,7 +81,7 @@ export const workspace = query({
 export const get = query({
   args: { storeId: v.id("stores") },
   handler: async (ctx, { storeId }) => {
-    const { store } = await requireStoreMembership(ctx, storeId)
+    const { store } = await requireStoreOwner(ctx, storeId)
     return { ...store, access: storeEntitlement(store) }
   },
 })

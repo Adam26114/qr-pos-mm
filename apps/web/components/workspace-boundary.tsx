@@ -3,10 +3,9 @@
 import { AuthBoundary } from "@convex-dev/better-auth/react"
 import { ConvexError } from "convex/values"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
-import { flushSync } from "react-dom"
 import { api } from "@/convex/_generated/api"
 import { authClient } from "@/lib/auth-client"
+import { useSignOut } from "@/lib/use-sign-out"
 import { Workspace } from "./workspace"
 import { useCopy } from "./language-switcher"
 import { LoadingState } from "@workspace/ui/composed/loading-state"
@@ -14,21 +13,7 @@ import { LoadingState } from "@workspace/ui/composed/loading-state"
 export function WorkspaceBoundary() {
   const router = useRouter()
   const { copy } = useCopy()
-  const [signingOut, setSigningOut] = useState(false)
-  const [failure, setFailure] = useState(false)
-  async function signOut() {
-    // Detach private subscriptions before revoking the session that authorizes them.
-    flushSync(() => setSigningOut(true))
-    setFailure(false)
-    try {
-      const result = await authClient.signOut()
-      if (result.error) throw new Error("Sign out failed")
-      window.location.replace("/login")
-    } catch {
-      setSigningOut(false)
-      setFailure(true)
-    }
-  }
+  const { signingOut, failure, signOut } = useSignOut("/login")
   if (signingOut)
     return (
       <div className="mx-auto max-w-2xl p-8">

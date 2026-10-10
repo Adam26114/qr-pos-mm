@@ -1,6 +1,48 @@
 export type Language = "en" | "my"
 
 const en = {
+  invitationExpires: "Invitation expires",
+  memberExists: "This email already has access to your store.",
+  membershipConflict:
+    "This account already belongs to a store. Ask the owner to invite a different individual account.",
+  invitationMismatch:
+    "Sign in with the invited email to accept this invitation.",
+  invalidInvitation:
+    "This invitation is invalid, used, canceled, or expired. Ask the owner for a new invitation.",
+  invitationIntro: "Sign in with the invited email, then join this store.",
+  invitationTitle: "You’re invited to join",
+  joinStore: "Join store",
+  keepAccess: "Go back",
+  cancelInvitationIntro: "Its link will no longer grant staff access.",
+  cancelInvitationTitle: "Cancel this invitation?",
+  cancelInvitation: "Cancel invitation",
+  removeAccessIntro:
+    "This account will immediately lose access to this store. A new invitation is required to return.",
+  removeAccessTitle: "Remove staff access?",
+  removeAccess: "Remove access",
+  deliveryFailed:
+    "Email failed. Cancel this invitation and invite again after checking email setup.",
+  deliverySent: "Email sent",
+  deliveryQueued: "Email queued",
+  inviteRevoked: "Canceled",
+  inviteExpired: "Expired",
+  inviteAccepted: "Accepted",
+  invitePending: "Pending",
+  removedMember: "Removed",
+  activeMember: "Active",
+  noInvitations: "No invitations yet.",
+  noStaff: "No staff have joined yet.",
+  invitations: "Invitations",
+  invitationQueued: "Invitation saved. Check the delivery status below.",
+  inviteStaff: "Invite staff",
+  staffEmail: "Staff email",
+  staffTeamIntro:
+    "Invite each staff member to use their own account. Invitations expire after seven days.",
+  staffTeam: "Staff",
+  staffRegisterIntro:
+    "Use your own name and password. This account joins the store in your invitation.",
+  staffRegisterTitle: "Create your staff account.",
+  staffAccount: "Staff account",
   language: "Language",
   signIn: "Sign in",
   signOut: "Sign out",
@@ -45,6 +87,13 @@ const en = {
     "This is the name your customers will see. Your 14-day trial begins now.",
   storePlaceholder: "For example, Mingalar Cafe",
   ownerWorkspace: "Owner workspace",
+  staffWorkspace: "Staff workspace",
+  staffReady: "Staff access is active.",
+  staffReadyIntro:
+    "You’re signed in with your individual staff account for this store.",
+  staffAccessRemoved: "Staff access removed.",
+  staffAccessRemovedIntro:
+    "Your access was removed. Ask the store owner for a new invitation.",
   activeTrial: "Active trial",
   expiredTrial: "Trial expired",
   trialEnds: "Trial ends",
@@ -74,6 +123,50 @@ const en = {
 }
 
 const my: Record<keyof typeof en, string> = {
+  invitationExpires: "ဖိတ်ကြားချက် သက်တမ်းကုန်မည့်ရက်",
+  memberExists: "ဤအီးမေးလ်သည် သင့်ဆိုင်သို့ ဝင်ရောက်ခွင့်ရှိပြီးဖြစ်သည်။",
+  membershipConflict:
+    "ဤအကောင့်သည် ဆိုင်တစ်ဆိုင်တွင် ဝင်ရောက်ခွင့်ရှိပြီးဖြစ်သည်။ အခြားကိုယ်ပိုင်အကောင့်ကို ဖိတ်ကြားရန် ဆိုင်ပိုင်ရှင်ထံ ဆက်သွယ်ပါ။",
+  invitationMismatch:
+    "ဤဖိတ်ကြားချက်ကို လက်ခံရန် ဖိတ်ကြားထားသော အီးမေးလ်ဖြင့် အကောင့်ဝင်ပါ။",
+  invalidInvitation:
+    "ဤဖိတ်ကြားချက်သည် မမှန်ပါ၊ အသုံးပြုပြီးပါပြီ၊ ပယ်ဖျက်ထားပါသည် သို့မဟုတ် သက်တမ်းကုန်ပါပြီ။ ဆိုင်ပိုင်ရှင်ထံ ဖိတ်ကြားချက်အသစ် တောင်းပါ။",
+  invitationIntro:
+    "ဖိတ်ကြားထားသော အီးမေးလ်ဖြင့် အကောင့်ဝင်ပြီး ဆိုင်သို့ ဝင်ရောက်ပါ။",
+  invitationTitle: "ဝင်ရောက်ရန် ဖိတ်ကြားထားပါသည်",
+  joinStore: "ဆိုင်သို့ ဝင်ရောက်မည်",
+  keepAccess: "ပြန်သွားမည်",
+  cancelInvitationIntro: "ဤလင့်ခ်မှ ဝန်ထမ်းဝင်ရောက်ခွင့် မရနိုင်တော့ပါ။",
+  cancelInvitationTitle: "ဤဖိတ်ကြားချက်ကို ပယ်ဖျက်မလား။",
+  cancelInvitation: "ဖိတ်ကြားချက် ပယ်ဖျက်မည်",
+  removeAccessIntro:
+    "ဤအကောင့်သည် ဆိုင်သို့ ဝင်ရောက်ခွင့် ချက်ချင်းဆုံးရှုံးပါမည်။ ပြန်ဝင်ရန် ဖိတ်ကြားချက်အသစ် လိုအပ်ပါသည်။",
+  removeAccessTitle: "ဝန်ထမ်းဝင်ရောက်ခွင့် ဖယ်ရှားမလား။",
+  removeAccess: "ဝင်ရောက်ခွင့် ဖယ်ရှားမည်",
+  deliveryFailed:
+    "အီးမေးလ်ပို့မရပါ။ ဖိတ်ကြားချက်ကို ပယ်ဖျက်ပြီး အီးမေးလ်စနစ်ကို စစ်ဆေးကာ ပြန်ဖိတ်ကြားပါ။",
+  deliverySent: "အီးမေးလ်ပို့ပြီး",
+  deliveryQueued: "အီးမေးလ်ပို့ရန် စောင့်နေသည်",
+  inviteRevoked: "ပယ်ဖျက်ပြီး",
+  inviteExpired: "သက်တမ်းကုန်ပြီ",
+  inviteAccepted: "လက်ခံပြီး",
+  invitePending: "စောင့်ဆိုင်းနေသည်",
+  removedMember: "ဖယ်ရှားထားသည်",
+  activeMember: "ဝင်ရောက်ခွင့်ရှိသည်",
+  noInvitations: "ဖိတ်ကြားချက် မရှိသေးပါ။",
+  noStaff: "ဝန်ထမ်း မဝင်ရောက်သေးပါ။",
+  invitations: "ဖိတ်ကြားချက်များ",
+  invitationQueued:
+    "ဖိတ်ကြားချက် သိမ်းပြီးပါပြီ။ အောက်တွင် ပို့ဆောင်မှုအခြေအနေကို စစ်ဆေးပါ။",
+  inviteStaff: "ဝန်ထမ်းဖိတ်ကြားမည်",
+  staffEmail: "ဝန်ထမ်းအီးမေးလ်",
+  staffTeamIntro:
+    "ဝန်ထမ်းတစ်ဦးစီကို ကိုယ်ပိုင်အကောင့်ဖြင့် ဖိတ်ကြားပါ။ ဖိတ်ကြားချက်များသည် ၇ ရက်အတွင်း သက်တမ်းကုန်ပါမည်။",
+  staffTeam: "ဝန်ထမ်းများ",
+  staffRegisterIntro:
+    "သင့်ကိုယ်ပိုင်အမည်နှင့် စကားဝှက်ကို အသုံးပြုပါ။ ဤအကောင့်သည် ဖိတ်ကြားထားသောဆိုင်သို့ ဝင်ရောက်ရန် ဖြစ်သည်။",
+  staffRegisterTitle: "သင့်ဝန်ထမ်းအကောင့် ဖန်တီးပါ။",
+  staffAccount: "ဝန်ထမ်းအကောင့်",
   language: "ဘာသာစကား",
   signIn: "အကောင့်ဝင်မည်",
   signOut: "အကောင့်မှထွက်မည်",
@@ -118,6 +211,13 @@ const my: Record<keyof typeof en, string> = {
     "သင့်ဖောက်သည်များ မြင်ရမည့် ဆိုင်အမည်ဖြစ်သည်။ ၁၄ ရက် အစမ်းသုံးကာလ စတင်ပါမည်။",
   storePlaceholder: "ဥပမာ၊ မင်္ဂလာကဖေး",
   ownerWorkspace: "ဆိုင်ပိုင်ရှင် လုပ်ငန်းစာမျက်နှာ",
+  staffWorkspace: "ဝန်ထမ်း လုပ်ငန်းစာမျက်နှာ",
+  staffReady: "ဝန်ထမ်းဝင်ရောက်ခွင့် ရရှိထားပါသည်။",
+  staffReadyIntro:
+    "ဤဆိုင်အတွက် သင့်ကိုယ်ပိုင် ဝန်ထမ်းအကောင့်ဖြင့် ဝင်ထားပါသည်။",
+  staffAccessRemoved: "ဝန်ထမ်းဝင်ရောက်ခွင့် ဖယ်ရှားထားပါသည်။",
+  staffAccessRemovedIntro:
+    "သင့်ဝင်ရောက်ခွင့်ကို ဖယ်ရှားထားပါသည်။ ဖိတ်ကြားချက်အသစ်ရရန် ဆိုင်ပိုင်ရှင်ထံ ဆက်သွယ်ပါ။",
   activeTrial: "အစမ်းသုံးကာလအတွင်း",
   expiredTrial: "အစမ်းသုံးကာလကုန်ဆုံးပြီ",
   trialEnds: "အစမ်းသုံးကာလ ကုန်ဆုံးမည့်ရက်",
