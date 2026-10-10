@@ -11,6 +11,21 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Button } from "@workspace/ui/components/button"
+import { Badge } from "@workspace/ui/components/badge"
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@workspace/ui/components/card"
+import { FieldSet } from "@workspace/ui/components/field"
+import { Separator } from "@workspace/ui/components/separator"
+import { TextField } from "@workspace/ui/composed/text-field"
+import { Feedback } from "@workspace/ui/composed/feedback"
+import { FormCard } from "@workspace/ui/composed/form-card"
+import { SubmitButton } from "@workspace/ui/composed/submit-button"
+import { LoadingState } from "@workspace/ui/composed/loading-state"
 import { api } from "@/convex/_generated/api"
 import { LanguageSwitcher, useCopy } from "./language-switcher"
 import { useOnline } from "@/lib/use-online"
@@ -79,18 +94,18 @@ export function Workspace({
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-6 py-10 sm:py-16">
-        {!online && (
-          <p role="status" className="mb-6 text-sm text-destructive">
-            {copy.offline}
-          </p>
-        )}
-        {online && connection.hasEverConnected && (
-          <p role="status" className="mb-6 text-sm text-muted-foreground">
-            {connection.isWebSocketConnected ? copy.online : copy.disconnected}
-          </p>
-        )}
+        {!online && <Feedback className="mb-6">{copy.offline}</Feedback>}
+        {online &&
+          connection.hasEverConnected &&
+          (connection.isWebSocketConnected ? (
+            <Badge variant="outline" role="status" className="mb-6">
+              {copy.online}
+            </Badge>
+          ) : (
+            <Feedback className="mb-6">{copy.disconnected}</Feedback>
+          ))}
         {!workspace ? (
-          <p role="status">{copy.loading}</p>
+          <LoadingState label={copy.loading} />
         ) : (
           <>
             <p className="text-xs font-semibold tracking-widest text-primary uppercase">
@@ -105,122 +120,103 @@ export function Workspace({
               </p>
             </div>
             {(failure || signOutFailed) && (
-              <p
-                role="alert"
-                className="mt-6 rounded-xl bg-destructive/10 p-4 text-sm text-destructive"
-              >
+              <Feedback tone="error" className="mt-6">
                 {copy.requestFailed}
-              </p>
+              </Feedback>
             )}
             {!workspace.store ? (
-              <section className="mt-10 grid gap-8 rounded-2xl border border-border bg-card p-6 sm:p-10 md:grid-cols-2">
-                <div>
-                  <h2 className="font-heading text-2xl font-semibold">
-                    {copy.trialPromise}
-                  </h2>
-                  <p className="mt-4 max-w-sm text-sm leading-7 text-muted-foreground">
-                    {copy.createStoreIntro}
-                  </p>
-                  <p className="mt-8 text-sm font-medium">{copy.trialLabel}</p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {copy.trialNote}
-                  </p>
-                </div>
-                <form
-                  onSubmit={handleSubmit(submit)}
-                  noValidate
-                  className="space-y-5"
-                >
-                  <fieldset
-                    disabled={!isReady || isSubmitting || !canSubmit}
-                    className="space-y-5"
-                  >
-                    <div className="space-y-2">
-                      <label
-                        htmlFor="store-name"
-                        className="block text-sm font-medium"
-                      >
-                        {copy.storeName}
-                      </label>
-                      <input
-                        id="store-name"
-                        autoComplete="organization"
-                        placeholder={copy.storePlaceholder}
-                        {...register("name")}
-                        aria-invalid={!!errors.name}
-                        aria-describedby={
-                          errors.name ? "store-name-error" : undefined
-                        }
-                        className="h-12 w-full rounded-xl border border-input bg-background px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                      />
-                      {errors.name && (
-                        <p
-                          id="store-name-error"
-                          role="alert"
-                          className="text-sm text-destructive"
-                        >
-                          {formError(errors.name.message, copy)}
-                        </p>
-                      )}
-                    </div>
-                    <Button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="h-12 w-full rounded-xl"
+              <FormCard
+                className="mt-10 max-w-2xl"
+                title={copy.trialPromise}
+                description={copy.createStoreIntro}
+              >
+                <Badge variant="secondary">{copy.trialLabel}</Badge>
+                <p className="mb-3 text-sm text-muted-foreground">
+                  {copy.trialNote}
+                </p>
+                <form onSubmit={handleSubmit(submit)} noValidate>
+                  <FieldSet disabled={!isReady || isSubmitting || !canSubmit}>
+                    <TextField
+                      id="store-name"
+                      label={copy.storeName}
+                      autoComplete="organization"
+                      placeholder={copy.storePlaceholder}
+                      {...register("name")}
+                      error={
+                        errors.name
+                          ? formError(errors.name.message, copy)
+                          : undefined
+                      }
+                    />
+                    <SubmitButton
+                      pending={isSubmitting}
+                      pendingLabel={copy.working}
                     >
-                      {isSubmitting ? copy.working : copy.createStore}
-                    </Button>
-                  </fieldset>
+                      {copy.createStore}
+                    </SubmitButton>
+                  </FieldSet>
                 </form>
-              </section>
+              </FormCard>
             ) : (
               <div className="mt-10 grid gap-6 md:grid-cols-[1.4fr_1fr]">
-                <section className="rounded-2xl bg-[#123f35] p-7 text-white sm:p-10">
-                  <span className="inline-flex rounded-full border border-white/25 px-3 py-1 text-xs font-medium">
-                    {workspace.access?.active
-                      ? copy.activeTrial
-                      : copy.expiredTrial}
-                  </span>
-                  <h2 className="mt-8 font-heading text-3xl leading-snug font-semibold">
-                    {workspace.access?.active
-                      ? copy.storeReady
-                      : copy.expiredTrial}
-                  </h2>
-                  <p className="mt-4 max-w-md text-sm leading-7 text-white/75">
-                    {workspace.access?.active
-                      ? copy.storeReadyIntro
-                      : copy.expiryIntro}
-                  </p>
-                  <dl className="mt-10 grid gap-6 border-t border-white/20 pt-6 sm:grid-cols-2">
-                    <div>
-                      <dt className="text-xs text-white/65">
-                        {copy.trialStarted}
-                      </dt>
-                      <dd className="mt-2 text-sm">
-                        {date(workspace.store.trialStartedAt)}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs text-white/65">
-                        {copy.trialEnds}
-                      </dt>
-                      <dd data-testid="trial-end" className="mt-2 text-sm">
-                        {date(workspace.store.trialEndsAt)}
-                      </dd>
-                    </div>
-                  </dl>
-                </section>
-                <section className="rounded-2xl border border-border bg-card p-7 sm:p-10">
-                  <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-                    {copy.monthlyPlan}
-                  </p>
-                  <p className="mt-6 font-heading text-2xl font-semibold">
-                    {copy.monthlyPrice}
-                  </p>
-                  <p className="mt-4 text-sm leading-7 text-muted-foreground">
-                    {copy.trialNote}
-                  </p>
-                </section>
+                <Card className="bg-primary text-primary-foreground ring-0">
+                  <CardHeader className="gap-5">
+                    <Badge
+                      variant="outline"
+                      className="border-primary-foreground/25 text-primary-foreground"
+                    >
+                      {workspace.access?.active
+                        ? copy.activeTrial
+                        : copy.expiredTrial}
+                    </Badge>
+                    <CardTitle className="text-3xl font-semibold">
+                      <h2>
+                        {workspace.access?.active
+                          ? copy.storeReady
+                          : copy.expiredTrial}
+                      </h2>
+                    </CardTitle>
+                    <CardDescription className="max-w-md leading-7 text-primary-foreground/80">
+                      {workspace.access?.active
+                        ? copy.storeReadyIntro
+                        : copy.expiryIntro}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="gap-6">
+                    <Separator className="bg-primary-foreground/20" />
+                    <dl className="grid gap-6 sm:grid-cols-2">
+                      <div>
+                        <dt className="text-xs text-primary-foreground/75">
+                          {copy.trialStarted}
+                        </dt>
+                        <dd className="mt-2 text-sm">
+                          {date(workspace.store.trialStartedAt)}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs text-primary-foreground/75">
+                          {copy.trialEnds}
+                        </dt>
+                        <dd data-testid="trial-end" className="mt-2 text-sm">
+                          {date(workspace.store.trialEndsAt)}
+                        </dd>
+                      </div>
+                    </dl>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="gap-5">
+                    <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                      {copy.monthlyPlan}
+                    </p>
+                    <CardTitle className="text-2xl font-semibold">
+                      {copy.monthlyPrice}
+                    </CardTitle>
+                    <CardDescription className="leading-7">
+                      {copy.trialNote}
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
               </div>
             )}
           </>

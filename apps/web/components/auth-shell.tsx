@@ -2,6 +2,14 @@
 
 import Link from "next/link"
 import type { ReactNode } from "react"
+import { Badge } from "@workspace/ui/components/badge"
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "@workspace/ui/components/card"
 import { LanguageSwitcher, useCopy } from "./language-switcher"
 
 export function AuthShell({ children }: { children: ReactNode }) {
@@ -21,36 +29,32 @@ export function AuthShell({ children }: { children: ReactNode }) {
         <LanguageSwitcher />
       </header>
       <main className="mx-auto grid max-w-7xl items-stretch gap-8 px-5 pb-8 sm:px-10 lg:min-h-[calc(100svh-100px)] lg:grid-cols-[1.05fr_1fr] lg:gap-16">
-        <aside className="relative flex flex-col justify-between overflow-hidden rounded-3xl bg-[#123f35] p-8 text-[#effaf5] sm:p-12">
-          <div>
-            <p className="mb-8 text-xs font-medium tracking-[0.22em] text-[#b5d3c9] uppercase">
-              QR POS · {copy.trialLabel}
-            </p>
-            <h1 className="max-w-lg font-heading text-4xl leading-tight font-semibold tracking-tight sm:text-5xl">
-              {copy.homeTagline}
-            </h1>
-            <p className="mt-5 max-w-sm text-base leading-7 text-[#c4ddd5]">
-              {copy.homeIntro}
-            </p>
-          </div>
-          <div className="mt-14 rounded-2xl border border-[#528170] bg-[#194f42] p-6">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <p className="text-2xl font-semibold tracking-tight">
-                {copy.trialLabel}
+        <aside className="flex">
+          <Card className="flex-1 justify-between bg-primary text-primary-foreground ring-0 [--card-spacing:--spacing(8)] sm:[--card-spacing:--spacing(12)]">
+            <CardHeader className="gap-5">
+              <p className="text-xs font-medium tracking-[0.22em] text-primary-foreground/80 uppercase">
+                QR POS · {copy.trialLabel}
               </p>
-              <span className="text-sm text-[#c4ddd5]">
-                {copy.monthlyPrice}
-              </span>
-            </div>
-            <div aria-hidden="true" className="mt-6 grid grid-cols-7 gap-2">
-              {Array.from({ length: 14 }, (_, i) => (
-                <span key={i} className="h-2 rounded-sm bg-[#b7e3d1]" />
-              ))}
-            </div>
-            <p className="mt-5 text-sm leading-6 text-[#c4ddd5]">
-              {copy.trialPromise}
-            </p>
-          </div>
+              <CardTitle className="max-w-lg text-4xl font-semibold tracking-tight sm:text-5xl">
+                <h1>{copy.homeTagline}</h1>
+              </CardTitle>
+              <CardDescription className="max-w-sm text-base leading-7 text-primary-foreground/80">
+                {copy.homeIntro}
+              </CardDescription>
+            </CardHeader>
+            <CardFooter className="mt-8 flex-wrap items-center justify-between gap-4 border-t border-primary-foreground/20">
+              <Badge
+                variant="outline"
+                className="border-primary-foreground/25 text-primary-foreground"
+              >
+                {copy.trialLabel}
+              </Badge>
+              <p className="text-sm">{copy.monthlyPrice}</p>
+              <p className="w-full text-sm leading-6 text-primary-foreground/80">
+                {copy.trialPromise}
+              </p>
+            </CardFooter>
+          </Card>
         </aside>
         <section className="flex items-center justify-center py-6 sm:py-12">
           <div className="w-full max-w-md">{children}</div>

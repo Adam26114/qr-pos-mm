@@ -22,6 +22,10 @@ Use the five default canonical triage labels. See `docs/agents/triage-labels.md`
 
 Single-context: root `CONTEXT.md` and `docs/adr/`. See `docs/agents/domain.md`.
 
+### UI components
+
+Before adding or changing UI, read `docs/agents/ui-components.md`. Build reusable interface patterns by composing the repository's shadcn/ui primitives.
+
 <!-- BEGIN:turborepo-agent-rules -->
 
 # This is NOT the Turborepo you know

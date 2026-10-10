@@ -1,12 +1,15 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Button } from "@workspace/ui/components/button"
+import { FieldSet } from "@workspace/ui/components/field"
+import { TextField } from "@workspace/ui/composed/text-field"
+import { Feedback } from "@workspace/ui/composed/feedback"
+import { FormCard } from "@workspace/ui/composed/form-card"
+import { SubmitButton } from "@workspace/ui/composed/submit-button"
 import { authClient } from "@/lib/auth-client"
 import { useCopy } from "./language-switcher"
 import { useOnline } from "@/lib/use-online"
@@ -22,7 +25,6 @@ type Fields = {
 
 export function AuthForm({ mode, token }: { mode: Mode; token?: string }) {
   const { copy } = useCopy()
-  const router = useRouter()
   const online = useOnline()
   const [notice, setNotice] = useState<MessageKey | null>(null)
   const [failure, setFailure] = useState<MessageKey | null>(null)
@@ -146,8 +148,8 @@ export function AuthForm({ mode, token }: { mode: Mode; token?: string }) {
         setNotice(mode === "forgot" ? "emailSent" : "resetSuccess")
         return
       }
-      router.replace("/workspace")
-      router.refresh()
+      // Start a fresh authenticated client so prior session callbacks cannot redirect it.
+      window.location.replace("/workspace")
     } catch {
       setFailure("requestFailed")
     }
@@ -188,119 +190,80 @@ export function AuthForm({ mode, token }: { mode: Mode; token?: string }) {
       autoComplete: "new-password",
     })
 
-  return (
-    <>
-      <p className="mb-3 text-xs font-semibold tracking-widest text-primary uppercase">
-        {copy.ownerAccount}
-      </p>
-      <h2 className="font-heading text-3xl leading-snug font-semibold tracking-tight">
-        {title}
-      </h2>
-      <p className="mt-3 mb-8 text-sm leading-6 text-muted-foreground">
-        {intro}
-      </p>
-      <form onSubmit={handleSubmit(submit)} noValidate className="space-y-5">
-        {!online && (
-          <p role="status" className="text-sm text-destructive">
-            {copy.offline}
-          </p>
-        )}
-        <fieldset
-          disabled={!isReady || isSubmitting || !online}
-          className="space-y-5"
+  const footer =
+    mode === "register" ? (
+      <p>
+        {copy.haveAccount}{" "}
+        <Link
+          href="/login"
+          className="font-medium text-primary hover:underline"
         >
+          {copy.signIn}
+        </Link>
+      </p>
+    ) : mode === "login" ? (
+      <p>
+        {copy.newAccount}{" "}
+        <Link
+          href="/register"
+          className="font-medium text-primary hover:underline"
+        >
+          {copy.createAccount}
+        </Link>
+      </p>
+    ) : (
+      <Link href="/login" className="font-medium text-primary hover:underline">
+        {copy.backToLogin}
+      </Link>
+    )
+
+  return (
+    <FormCard
+      title={title}
+      description={intro}
+      eyebrow={copy.ownerAccount}
+      footer={footer}
+    >
+      <form onSubmit={handleSubmit(submit)} noValidate className="space-y-5">
+        {!online && <Feedback>{copy.offline}</Feedback>}
+        <FieldSet disabled={!isReady || isSubmitting || !online}>
           {fields.map((field) => (
-            <div key={field.key} className="space-y-2">
-              <label htmlFor={field.key} className="block text-sm font-medium">
-                {field.label}
-              </label>
-              <input
-                id={field.key}
-                type={field.type}
-                autoComplete={field.autoComplete}
-                {...register(field.key)}
-                aria-invalid={!!errors[field.key]}
-                aria-describedby={
-                  errors[field.key] ? `${field.key}-error` : undefined
-                }
-                className="h-12 w-full rounded-xl border border-input bg-background px-4 text-base outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-              />
-              {errors[field.key] && (
-                <p
-                  id={`${field.key}-error`}
-                  role="alert"
-                  className="text-sm text-destructive"
-                >
-                  {formError(errors[field.key]?.message, copy)}
-                </p>
-              )}
-            </div>
+            <TextField
+              key={field.key}
+              id={field.key}
+              label={field.label}
+              type={field.type}
+              autoComplete={field.autoComplete}
+              {...register(field.key)}
+              error={
+                errors[field.key]
+                  ? formError(errors[field.key]?.message, copy)
+                  : undefined
+              }
+            />
           ))}
-          {failure && (
-            <p
-              role="alert"
-              className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive"
-            >
-              {copy[failure]}
-            </p>
-          )}
-          {notice && (
-            <p role="status" className="rounded-lg bg-primary/10 p-3 text-sm">
-              {copy[notice]}
-            </p>
-          )}
+          {failure && <Feedback tone="error">{copy[failure]}</Feedback>}
+          {notice && <Feedback>{copy[notice]}</Feedback>}
           {mode === "reset" && !token && (
-            <p role="alert" className="text-sm text-destructive">
-              {copy.invalidLink}
-            </p>
+            <Feedback tone="error">{copy.invalidLink}</Feedback>
           )}
-          <Button
-            type="submit"
-            disabled={isSubmitting || (mode === "reset" && !token)}
-            className="h-12 w-full rounded-xl"
+          <SubmitButton
+            pending={isSubmitting}
+            pendingLabel={copy.working}
+            disabled={mode === "reset" && !token}
           >
-            {isSubmitting ? copy.working : action}
-          </Button>
-        </fieldset>
+            {action}
+          </SubmitButton>
+        </FieldSet>
       </form>
       {mode === "login" && (
         <Link
           href="/forgot-password"
-          className="mt-5 block text-sm font-medium text-primary hover:underline"
+          className="mt-2 block text-sm font-medium text-primary hover:underline"
         >
           {copy.forgot}
         </Link>
       )}
-      <p className="mt-8 border-t border-border pt-6 text-sm text-muted-foreground">
-        {mode === "register" ? (
-          <>
-            {copy.haveAccount}{" "}
-            <Link
-              href="/login"
-              className="font-medium text-primary hover:underline"
-            >
-              {copy.signIn}
-            </Link>
-          </>
-        ) : mode === "login" ? (
-          <>
-            {copy.newAccount}{" "}
-            <Link
-              href="/register"
-              className="font-medium text-primary hover:underline"
-            >
-              {copy.createAccount}
-            </Link>
-          </>
-        ) : (
-          <Link
-            href="/login"
-            className="font-medium text-primary hover:underline"
-          >
-            {copy.backToLogin}
-          </Link>
-        )}
-      </p>
-    </>
+    </FormCard>
   )
 }

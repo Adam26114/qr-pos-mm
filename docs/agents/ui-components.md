@@ -1,0 +1,45 @@
+# UI composition
+
+The owner's chosen approach is to build reusable product UI on top of shadcn/ui. Apply it when adding screens, controls, feedback, or layout patterns.
+
+## Where code belongs
+
+- `packages/ui/src/components`: shadcn primitives installed with the repository's existing `base-vega` / Base UI configuration. Import through `@workspace/ui/components/*`.
+- `packages/ui/src/composed`: reusable presentation patterns composed from those primitives. Import through `@workspace/ui/composed/*`.
+- `apps/web/components`: product screens and domain-specific compositions. These own authentication, Convex subscriptions/mutations, form schemas, and system translations.
+
+Use the existing shared patterns first:
+
+- `TextField`: Field, label, Input, optional description, and accessible validation error. It forwards native input props and refs so React Hook Form can register it directly.
+- `SubmitButton`: Button, a decorative Spinner, pending label, busy state, and disabled state.
+- `Feedback`: Alert and its description, with assertive error or polite status semantics.
+- `FormCard`: Card header, heading, description, content, and optional footer for account and onboarding forms.
+- `LoadingState`: Card, localized status text, and decorative Skeletons.
+
+## Composition rules
+
+Compose controls and surfaces from the appropriate shadcn primitives: Input/Field for text entry, Card for grouped content, Alert for feedback, Badge for status, and Button for actions. Use native HTML for document landmarks and layouts.
+
+Keep shared compositions independent of Convex, auth, Redux, and product translations. Callers supply translated labels and own data, validation, and commands. Convex remains the realtime source of truth.
+
+Extract a repeated pattern when it centralizes meaningful styling, accessibility, or interaction behavior. Use primitives directly where a wrapper would only rename them. Add further primitives when a feature uses them.
+
+Use theme tokens such as `bg-card`, `bg-primary`, `text-primary-foreground`, and `border-border`. Prefer component variants and `cn()` for consistent customization.
+
+When adding a shared composition, migrate the existing callers that need it and verify their public browser journeys. Preserve field labels/error associations, ref forwarding, pending/disabled behavior, connectivity guards, responsive layouts, and Burmese/English system text.
+
+## Example
+
+```tsx
+<TextField
+  id="store-name"
+  label={copy.storeName}
+  {...register("name")}
+  error={errors.name ? formError(errors.name.message, copy) : undefined}
+/>
+<SubmitButton pending={isSubmitting} pendingLabel={copy.working}>
+  {copy.createStore}
+</SubmitButton>
+```
+
+The form supplies its schema and online/connection guard. The shared compositions handle presentation and accessible controls.

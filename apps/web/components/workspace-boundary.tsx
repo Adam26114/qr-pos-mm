@@ -9,6 +9,7 @@ import { api } from "@/convex/_generated/api"
 import { authClient } from "@/lib/auth-client"
 import { Workspace } from "./workspace"
 import { useCopy } from "./language-switcher"
+import { LoadingState } from "@workspace/ui/composed/loading-state"
 
 export function WorkspaceBoundary() {
   const router = useRouter()
@@ -22,8 +23,7 @@ export function WorkspaceBoundary() {
     try {
       const result = await authClient.signOut()
       if (result.error) throw new Error("Sign out failed")
-      router.replace("/login")
-      router.refresh()
+      window.location.replace("/login")
     } catch {
       setSigningOut(false)
       setFailure(true)
@@ -31,9 +31,9 @@ export function WorkspaceBoundary() {
   }
   if (signingOut)
     return (
-      <p role="status" className="p-8">
-        {copy.working}
-      </p>
+      <div className="mx-auto max-w-2xl p-8">
+        <LoadingState label={copy.working} />
+      </div>
     )
   return (
     <AuthBoundary
