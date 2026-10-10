@@ -26,6 +26,7 @@ import { Feedback } from "@workspace/ui/composed/feedback"
 import { FormCard } from "@workspace/ui/composed/form-card"
 import { SubmitButton } from "@workspace/ui/composed/submit-button"
 import { LoadingState } from "@workspace/ui/composed/loading-state"
+import { MenuManager, StaffMenu } from "./menu-manager"
 import { StaffManager } from "./staff-manager"
 import { api } from "@/convex/_generated/api"
 import { LanguageSwitcher, useCopy } from "./language-switcher"
@@ -241,6 +242,15 @@ export function Workspace({
                   </CardHeader>
                 </Card>
               </div>
+            )}
+            {workspace.accountKind === "staff" && workspace.store && (
+              <StaffMenu storeId={workspace.store._id} />
+            )}
+            {workspace.accountKind === "owner" && workspace.store && (
+              <MenuManager
+                storeId={workspace.store._id}
+                connected={canSubmit}
+              />
             )}
             {workspace.accountKind === "owner" && workspace.store && (
               <StaffManager

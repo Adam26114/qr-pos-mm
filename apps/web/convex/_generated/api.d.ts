@@ -12,6 +12,8 @@ import type * as auth from "../auth.js";
 import type * as email from "../email.js";
 import type * as http from "../http.js";
 import type * as lib_store_access from "../lib/store_access.js";
+import type * as menu from "../menu.js";
+import type * as menu_photos from "../menu_photos.js";
 import type * as staff from "../staff.js";
 import type * as stores from "../stores.js";
 
@@ -26,6 +28,8 @@ declare const fullApi: ApiFromModules<{
   email: typeof email;
   http: typeof http;
   "lib/store_access": typeof lib_store_access;
+  menu: typeof menu;
+  menu_photos: typeof menu_photos;
   staff: typeof staff;
   stores: typeof stores;
 }>;
