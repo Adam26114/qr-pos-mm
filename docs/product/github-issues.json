@@ -1,0 +1,247 @@
+{
+  "repository": "Adam26114/qr-pos-mm",
+  "spec": {
+    "number": 1,
+    "id": 5789333561,
+    "node_id": "I_kwDOVDXyAc8AAAABWRI4OQ",
+    "html_url": "https://github.com/Adam26114/qr-pos-mm/issues/1",
+    "title": "[Spec] QR Menu and POS SaaS: First Release"
+  },
+  "tickets": [
+    {
+      "number": 2,
+      "id": 5789333842,
+      "node_id": "I_kwDOVDXyAc8AAAABWRI5Ug",
+      "html_url": "https://github.com/Adam26114/qr-pos-mm/issues/2",
+      "title": "Owner signup creates one store and starts its trial",
+      "plan_number": 1,
+      "blocked_by_plan_numbers": [],
+      "external_prerequisite": null
+    },
+    {
+      "number": 3,
+      "id": 5789334130,
+      "node_id": "I_kwDOVDXyAc8AAAABWRI6cg",
+      "html_url": "https://github.com/Adam26114/qr-pos-mm/issues/3",
+      "title": "Owner invites and removes individual staff",
+      "plan_number": 2,
+      "blocked_by_plan_numbers": [
+        1
+      ],
+      "external_prerequisite": null
+    },
+    {
+      "number": 4,
+      "id": 5789334413,
+      "node_id": "I_kwDOVDXyAc8AAAABWRI7jQ",
+      "html_url": "https://github.com/Adam26114/qr-pos-mm/issues/4",
+      "title": "Owner manages a single-price menu",
+      "plan_number": 3,
+      "blocked_by_plan_numbers": [
+        1
+      ],
+      "external_prerequisite": null
+    },
+    {
+      "number": 5,
+      "id": 5789334693,
+      "node_id": "I_kwDOVDXyAc8AAAABWRI8pQ",
+      "html_url": "https://github.com/Adam26114/qr-pos-mm/issues/5",
+      "title": "Publish the shared store QR menu and numbered tables",
+      "plan_number": 4,
+      "blocked_by_plan_numbers": [
+        3
+      ],
+      "external_prerequisite": null
+    },
+    {
+      "number": 6,
+      "id": 5789334966,
+      "node_id": "I_kwDOVDXyAc8AAAABWRI9tg",
+      "html_url": "https://github.com/Adam26114/qr-pos-mm/issues/6",
+      "title": "Seated guests submit cash orders and track them privately",
+      "plan_number": 5,
+      "blocked_by_plan_numbers": [
+        4
+      ],
+      "external_prerequisite": null
+    },
+    {
+      "number": 7,
+      "id": 5789335253,
+      "node_id": "I_kwDOVDXyAc8AAAABWRI-1Q",
+      "html_url": "https://github.com/Adam26114/qr-pos-mm/issues/7",
+      "title": "Staff prepares orders and records seated cash collection",
+      "plan_number": 6,
+      "blocked_by_plan_numbers": [
+        2,
+        5
+      ],
+      "external_prerequisite": null
+    },
+    {
+      "number": 8,
+      "id": 5789335532,
+      "node_id": "I_kwDOVDXyAc8AAAABWRI_7A",
+      "html_url": "https://github.com/Adam26114/qr-pos-mm/issues/8",
+      "title": "Staff takes prepaid counter orders",
+      "plan_number": 7,
+      "blocked_by_plan_numbers": [
+        6
+      ],
+      "external_prerequisite": null
+    },
+    {
+      "number": 9,
+      "id": 5789335838,
+      "node_id": "I_kwDOVDXyAc8AAAABWRJBHg",
+      "html_url": "https://github.com/Adam26114/qr-pos-mm/issues/9",
+      "title": "Owner cancels orders and records external full refunds",
+      "plan_number": 8,
+      "blocked_by_plan_numbers": [
+        6
+      ],
+      "external_prerequisite": null
+    },
+    {
+      "number": 10,
+      "id": 5789336100,
+      "node_id": "I_kwDOVDXyAc8AAAABWRJCJA",
+      "html_url": "https://github.com/Adam26114/qr-pos-mm/issues/10",
+      "title": "Owner sees collected sales, refunds, net, and unpaid orders",
+      "plan_number": 9,
+      "blocked_by_plan_numbers": [
+        8
+      ],
+      "external_prerequisite": null
+    },
+    {
+      "number": 11,
+      "id": 5789336335,
+      "node_id": "I_kwDOVDXyAc8AAAABWRJDDw",
+      "html_url": "https://github.com/Adam26114/qr-pos-mm/issues/11",
+      "title": "Exercise customer MMQR orders with a development simulator",
+      "plan_number": 10,
+      "blocked_by_plan_numbers": [
+        7
+      ],
+      "external_prerequisite": null
+    },
+    {
+      "number": 12,
+      "id": 5789336594,
+      "node_id": "I_kwDOVDXyAc8AAAABWRJEEg",
+      "html_url": "https://github.com/Adam26114/qr-pos-mm/issues/12",
+      "title": "Owner renews monthly access through simulated MMQR billing",
+      "plan_number": 11,
+      "blocked_by_plan_numbers": [
+        10
+      ],
+      "external_prerequisite": null
+    },
+    {
+      "number": 13,
+      "id": 5789336927,
+      "node_id": "I_kwDOVDXyAc8AAAABWRJFXw",
+      "html_url": "https://github.com/Adam26114/qr-pos-mm/issues/13",
+      "title": "Connect real store MMQR payments",
+      "plan_number": 12,
+      "blocked_by_plan_numbers": [
+        10
+      ],
+      "external_prerequisite": "external provider documentation, sandbox/API access, and store merchant onboarding capability."
+    },
+    {
+      "number": 14,
+      "id": 5789337219,
+      "node_id": "I_kwDOVDXyAc8AAAABWRJGgw",
+      "html_url": "https://github.com/Adam26114/qr-pos-mm/issues/14",
+      "title": "Connect real subscription renewals and verify paid-launch readiness",
+      "plan_number": 13,
+      "blocked_by_plan_numbers": [
+        9,
+        11,
+        12
+      ],
+      "external_prerequisite": "external platform merchant access."
+    }
+  ],
+  "dependency_edges": [
+    {
+      "issue_number": 3,
+      "blocked_by_issue_number": 2,
+      "native": true
+    },
+    {
+      "issue_number": 4,
+      "blocked_by_issue_number": 2,
+      "native": true
+    },
+    {
+      "issue_number": 5,
+      "blocked_by_issue_number": 4,
+      "native": true
+    },
+    {
+      "issue_number": 6,
+      "blocked_by_issue_number": 5,
+      "native": true
+    },
+    {
+      "issue_number": 7,
+      "blocked_by_issue_number": 3,
+      "native": true
+    },
+    {
+      "issue_number": 7,
+      "blocked_by_issue_number": 6,
+      "native": true
+    },
+    {
+      "issue_number": 8,
+      "blocked_by_issue_number": 7,
+      "native": true
+    },
+    {
+      "issue_number": 9,
+      "blocked_by_issue_number": 7,
+      "native": true
+    },
+    {
+      "issue_number": 10,
+      "blocked_by_issue_number": 9,
+      "native": true
+    },
+    {
+      "issue_number": 11,
+      "blocked_by_issue_number": 8,
+      "native": true
+    },
+    {
+      "issue_number": 12,
+      "blocked_by_issue_number": 11,
+      "native": true
+    },
+    {
+      "issue_number": 13,
+      "blocked_by_issue_number": 11,
+      "native": true
+    },
+    {
+      "issue_number": 14,
+      "blocked_by_issue_number": 10,
+      "native": true
+    },
+    {
+      "issue_number": 14,
+      "blocked_by_issue_number": 12,
+      "native": true
+    },
+    {
+      "issue_number": 14,
+      "blocked_by_issue_number": 13,
+      "native": true
+    }
+  ],
+  "verified": true
+}

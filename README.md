@@ -1,21 +1,9 @@
-# shadcn/ui monorepo template
+# QR POS Myanmar
 
-This is a Next.js monorepo template with shadcn/ui.
+QR menu and counter POS service for cafes and restaurants, built with Next.js 16, React 19, Convex, Better Auth and Bun/Turborepo.
 
-## Adding components
+The first implemented slice provides owner email/password accounts, password recovery, one store per owner, and a fourteen-day trial with a protected Burmese/English workspace.
 
-To add components to your app, run the following command at the root of your `web` app:
+See [local setup and tests](docs/development.md), the [approved product specification](docs/product/spec.md), and the [implementation tickets](docs/product/implementation-plan.md).
 
-```bash
-pnpm dlx shadcn@latest add button -c apps/web
-```
-
-This will place the ui components in the `packages/ui/src/components` directory.
-
-## Using components
-
-To use the components in your app, import them from the `ui` package.
-
-```tsx
-import { Button } from "@workspace/ui/components/button";
-```
+Shared shadcn/ui components live in `packages/ui`; import them through `@workspace/ui/components/*`.
