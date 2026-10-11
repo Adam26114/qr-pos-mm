@@ -255,7 +255,6 @@ function MenuCatalog({
                   owner ? (
                     <>
                       <Button
-                        size="icon-sm"
                         variant="outline"
                         aria-label={copy.editItem}
                         title={copy.editItem}
@@ -267,15 +266,20 @@ function MenuCatalog({
                         }}
                       >
                         <HugeiconsIcon icon={Edit02Icon} aria-hidden="true" />
+                        {copy.editAction}
                       </Button>
                       <ConfirmAction
                         {...confirmation}
                         label={copy.removeFromSale}
-                        triggerIcon={
-                          <HugeiconsIcon
-                            icon={Delete02Icon}
-                            aria-hidden="true"
-                          />
+                        triggerVariant="destructive"
+                        triggerContent={
+                          <>
+                            <HugeiconsIcon
+                              icon={Delete02Icon}
+                              aria-hidden="true"
+                            />
+                            {copy.deleteAction}
+                          </>
                         }
                         title={copy.removeItemTitle}
                         description={`${item.name} — ${copy.removeItemIntro}`}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, type ReactNode } from "react"
+import { useState, type ReactNode, type ComponentProps } from "react"
 import { Button } from "@workspace/ui/components/button"
 import {
   AlertDialog,
@@ -25,7 +25,8 @@ export function ConfirmAction({
   failureMessage,
   disabled,
   onConfirm,
-  triggerIcon,
+  triggerContent,
+  triggerVariant = "outline",
 }: {
   label: string
   title: string
@@ -35,7 +36,8 @@ export function ConfirmAction({
   failureMessage: string
   disabled?: boolean
   onConfirm: () => Promise<unknown>
-  triggerIcon?: ReactNode
+  triggerContent?: ReactNode
+  triggerVariant?: ComponentProps<typeof Button>["variant"]
 }) {
   const [open, setOpen] = useState(false)
   const [pending, setPending] = useState(false)
@@ -64,17 +66,11 @@ export function ConfirmAction({
       }}
     >
       <AlertDialogTrigger
-        render={
-          <Button
-            variant="outline"
-            size={triggerIcon ? "icon-sm" : "default"}
-            title={label}
-          />
-        }
+        render={<Button variant={triggerVariant} title={label} />}
         aria-label={label}
         disabled={disabled}
       >
-        {triggerIcon ?? label}
+        {triggerContent ?? label}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
