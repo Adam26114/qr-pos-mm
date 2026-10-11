@@ -4,14 +4,13 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { Search01Icon } from "@hugeicons/core-free-icons"
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
-import { cn } from "cn"
 
 type SearchProps = {
   searchLabel: string
   search: string
   onSearchChange: (value: string) => void
 }
-type CategoryProps = {
+export type CatalogCategoryProps = {
   categoryLabel: string
   allLabel: string
   categories: { id: string; label: string }[]
@@ -49,8 +48,7 @@ export function CatalogCategories({
   categories,
   selectedCategory,
   onCategoryChange,
-  tiles = false,
-}: CategoryProps & { tiles?: boolean }) {
+}: CatalogCategoryProps) {
   const selected = categories.some(
     (category) => category.id === selectedCategory
   )
@@ -65,14 +63,10 @@ export function CatalogCategories({
       {[{ id: "all", label: allLabel }, ...categories].map((category) => (
         <Button
           key={category.id}
-          variant={tiles || selected !== category.id ? "outline" : "default"}
+          variant={selected !== category.id ? "outline" : "default"}
           aria-pressed={selected === category.id}
           onClick={() => onCategoryChange(category.id)}
-          className={cn(
-            "h-auto min-h-16 min-w-28 shrink-0 px-5 py-3 text-sm whitespace-normal",
-            tiles &&
-              "min-h-24 min-w-32 rounded-xl shadow-none aria-pressed:border-foreground aria-pressed:bg-muted aria-pressed:text-foreground sm:min-h-28 sm:min-w-36 dark:aria-pressed:bg-muted"
-          )}
+          className="h-auto min-h-16 min-w-28 shrink-0 px-5 py-3 text-sm whitespace-normal"
         >
           <span className="max-w-44 [overflow-wrap:anywhere]">
             {category.label}
@@ -83,7 +77,7 @@ export function CatalogCategories({
   )
 }
 
-export function CatalogFilters(props: SearchProps & CategoryProps) {
+export function CatalogFilters(props: SearchProps & CatalogCategoryProps) {
   return (
     <div className="space-y-4">
       <CatalogSearch {...props} />

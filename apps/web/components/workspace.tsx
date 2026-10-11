@@ -89,6 +89,20 @@ export function Workspace({
         toggleLabel={copy.toggleSidebar}
         controls={
           <>
+            {connected && (
+              <Badge
+                variant="outline"
+                role="status"
+                title={copy.online}
+                className="gap-1.5"
+              >
+                <span
+                  aria-hidden="true"
+                  className="size-1.5 rounded-full bg-primary"
+                />
+                <span className="sr-only sm:not-sr-only">{copy.online}</span>
+              </Badge>
+            )}
             <LanguageSwitcher />
             <WorkspaceAccount
               user={workspace.user}
@@ -103,10 +117,6 @@ export function Workspace({
           <Feedback>{copy.offline}</Feedback>
         ) : connection.hasEverConnected && !connection.isWebSocketConnected ? (
           <Feedback>{copy.disconnected}</Feedback>
-        ) : connection.isWebSocketConnected ? (
-          <Badge variant="outline" role="status">
-            {copy.online}
-          </Badge>
         ) : null}
         {signOutFailed && (
           <Feedback tone="error">{copy.requestFailed}</Feedback>

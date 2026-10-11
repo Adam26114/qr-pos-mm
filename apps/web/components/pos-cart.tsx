@@ -123,7 +123,7 @@ export function PosCart({
   return (
     <section
       aria-label={pos.cart}
-      className="min-w-0 space-y-4 xl:sticky xl:top-4"
+      className="min-w-0 space-y-4 lg:sticky lg:top-4"
     >
       <Card className="gap-0 py-0 shadow-none ring-border">
         <CardHeader className="border-b bg-muted/20 p-4">

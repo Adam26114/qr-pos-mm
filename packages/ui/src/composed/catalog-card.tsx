@@ -22,7 +22,7 @@ export function CatalogCard({
   tools?: ReactNode
 }) {
   return (
-    <Card className="h-full gap-0 overflow-hidden py-0">
+    <Card className="h-full min-w-0 gap-0 overflow-hidden py-0">
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
         {image}
         {tools && (
@@ -40,11 +40,17 @@ export function CatalogCard({
             </p>
           )}
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div
+          className={cn(
+            "flex flex-wrap items-center justify-between gap-2",
+            compact && "grid grid-cols-[minmax(0,1fr)_auto] items-end gap-1"
+          )}
+        >
           <span
             className={cn(
               "font-medium tabular-nums",
-              compact && "text-muted-foreground"
+              compact &&
+                "min-w-0 [overflow-wrap:anywhere] text-muted-foreground"
             )}
           >
             {price}
