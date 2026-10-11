@@ -26,13 +26,7 @@ import { Textarea } from "@workspace/ui/components/textarea"
 import { Switch } from "@workspace/ui/components/switch"
 import { DialogFooter } from "@workspace/ui/components/dialog"
 import { cn } from "@workspace/ui/lib/utils"
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@workspace/ui/components/select"
+import { ComboboxField } from "@workspace/ui/composed/combobox-field"
 import { TextField } from "@workspace/ui/composed/text-field"
 import { FormCard } from "@workspace/ui/composed/form-card"
 import { SubmitButton } from "@workspace/ui/composed/submit-button"
@@ -239,46 +233,27 @@ export function MenuItemEditor({
                 name="categoryId"
                 control={control}
                 render={({ field }) => (
-                  <Field data-invalid={!!errors.categoryId} className="min-w-0">
-                    <FieldLabel htmlFor="item-category">
-                      {copy.itemCategory}
-                    </FieldLabel>
-                    <Select
-                      value={field.value}
-                      onValueChange={(value) => field.onChange(value ?? "")}
-                      name={field.name}
-                      disabled={disabled}
-                      items={categories.map((category) => ({
-                        value: category._id,
-                        label: category.name,
-                      }))}
-                    >
-                      <SelectTrigger
-                        id="item-category"
-                        ref={field.ref}
-                        onBlur={field.onBlur}
-                        className="w-full"
-                        aria-invalid={!!errors.categoryId}
-                        aria-describedby={
-                          errors.categoryId ? "category-error" : undefined
-                        }
-                      >
-                        <SelectValue placeholder={copy.chooseCategory} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category._id} value={category._id}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.categoryId && (
-                      <FieldError id="category-error">
-                        {formError(errors.categoryId.message, copy)}
-                      </FieldError>
-                    )}
-                  </Field>
+                  <ComboboxField
+                    id="item-category"
+                    label={copy.itemCategory}
+                    placeholder={copy.chooseCategory}
+                    emptyMessage={copy.noMatchingCategories}
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    name={field.name}
+                    disabled={disabled}
+                    ref={field.ref}
+                    onBlur={field.onBlur}
+                    error={
+                      errors.categoryId
+                        ? formError(errors.categoryId.message, copy)
+                        : undefined
+                    }
+                    options={categories.map((category) => ({
+                      value: category._id,
+                      label: category.name,
+                    }))}
+                  />
                 )}
               />
             </div>

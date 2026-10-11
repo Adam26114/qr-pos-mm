@@ -138,7 +138,7 @@ test("photos persist and live menu updates reach another owner session on Burmes
   ).toBeVisible()
   await page
     .getByRole("dialog")
-    .getByRole("button", { name: "Close", exact: true })
+    .getByRole("button", { name: "Cancel", exact: true })
     .click()
   await page.getByRole("button", { name: "မြန်မာ", exact: true }).click()
   await page

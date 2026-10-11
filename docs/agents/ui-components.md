@@ -11,6 +11,7 @@ The owner's chosen approach is to build reusable product UI on top of shadcn/ui.
 Use the existing shared patterns first:
 
 - `TextField`: Field, label, Input, optional description, and accessible validation error. It forwards native input props and refs so React Hook Form can register it directly.
+- `ComboboxField`: searchable shadcn Combobox with a Field label, validation error, and the same size and spacing as TextField. Callers supply options, selected value, copy, and change/blur handlers; its input ref supports React Hook Form.
 - `SubmitButton`: Button, a decorative Spinner, pending label, busy state, and disabled state. Defaults to form submission; pass `type="button"` for an asynchronous action outside a form.
 - `Feedback`: Alert and its description, with assertive error or polite status semantics.
 - `FormCard`: Card header, heading, description, content, and optional footer for account and onboarding forms.
