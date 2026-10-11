@@ -322,3 +322,164 @@ test("initial acceptance rejects stale prices, unavailable items, unsafe totals 
       owner.mutation(api.tables.add, { storeId, number })
     ).rejects.toThrow("INVALID_TABLE")
 })
+
+test("staff recover paid unassigned counter bills after expiry and finish accepted unpaid bills", async () => {
+  const { t, owner, storeId, itemId } = await cafe(
+    "expired-counter@example.com"
+  )
+  const staff = await authenticate(t, "expired-counter-staff@example.com")
+  const staffUser = await staff.query(api.auth.getAuthUser)
+  await t.run((ctx) =>
+    ctx.db.insert("memberships", {
+      userId: staffUser._id,
+      storeId,
+      role: "staff",
+    })
+  )
+  const input = {
+    storeId,
+    submissionKey: "paid-before-expiry",
+    lines: [{ itemId, quantity: 2, expectedPrice: 2500 }],
+    note: "Keep this bill",
+  }
+  const paid = await staff.mutation(api.orders.createCounter, input)
+  const unpaid = await staff.mutation(api.orders.createCounter, {
+    ...input,
+    submissionKey: "unpaid-before-expiry",
+  })
+  await staff.mutation(api.orders.recordCash, { storeId, orderId: paid })
+  await t.run((ctx) => ctx.db.patch(storeId, { trialEndsAt: Date.now() - 1 }))
+  expect(await staff.query(api.orders.queue, { storeId })).toMatchObject([
+    {
+      _id: paid,
+      status: "pending",
+      destination: null,
+      payment: { amount: 5000 },
+    },
+    { _id: unpaid, status: "pending", destination: null, payment: null },
+  ])
+  expect(
+    await staff.query(api.orders.submission, {
+      storeId,
+      submissionKey: input.submissionKey,
+    })
+  ).toBe(paid)
+  expect(await staff.mutation(api.orders.createCounter, input)).toBe(paid)
+  for (const actor of [owner, staff])
+    await expect(
+      actor.mutation(api.orders.createCounter, {
+        ...input,
+        submissionKey: "new-expired-counter",
+      })
+    ).rejects.toThrow("STORE_ACCESS_EXPIRED")
+  await expect(
+    staff.mutation(api.orders.startCooking, {
+      storeId,
+      orderId: paid,
+    })
+  ).rejects.toThrow("DESTINATION_REQUIRED")
+  for (const orderId of [paid, unpaid]) {
+    const command = { storeId, orderId }
+    await staff.mutation(api.orders.recordCash, command)
+    await staff.mutation(api.orders.assignDestination, {
+      ...command,
+      destination: { kind: "takeaway" },
+    })
+    await staff.mutation(api.orders.startCooking, command)
+    await staff.mutation(api.orders.markServed, command)
+    const detail = await staff.query(api.orders.detail, command)
+    expect(detail).toMatchObject({
+      order: {
+        status: "served",
+        total: 5000,
+        destination: { kind: "takeaway" },
+        lines: [{ name: "လက်ဖက်ရည် Tea", unitPrice: 2500, quantity: 2 }],
+      },
+      payment: { amount: 5000 },
+    })
+    expect(detail.events.map((event) => event.kind)).toEqual([
+      "cash_received",
+      "destination_changed",
+      "cooking",
+      "served",
+    ])
+  }
+  expect(await staff.query(api.orders.queue, { storeId })).toEqual([])
+  expect(
+    (
+      await staff.query(api.orders.history, {
+        storeId,
+        paginationOpts: { numItems: 20, cursor: null },
+      })
+    ).page
+  ).toHaveLength(2)
+})
+
+test("concurrent counter assignments preserve one destination and a serialized correction history", async () => {
+  const { t, owner, storeId, itemId } = await cafe(
+    "assignment-owner@example.com"
+  )
+  const staff = await authenticate(t, "assignment-staff@example.com")
+  const staffUser = await staff.query(api.auth.getAuthUser)
+  await t.run((ctx) =>
+    ctx.db.insert("memberships", {
+      userId: staffUser._id,
+      storeId,
+      role: "staff",
+    })
+  )
+  const tableId = await owner.mutation(api.tables.add, { storeId, number: 4 })
+  const nextTable = await owner.mutation(api.tables.add, { storeId, number: 7 })
+  const orderId = await staff.mutation(api.orders.createCounter, {
+    storeId,
+    submissionKey: "concurrent-assignment",
+    lines: [{ itemId, quantity: 1, expectedPrice: 2500 }],
+    note: "",
+  })
+  const command = { storeId, orderId }
+  await staff.mutation(api.orders.recordCash, command)
+  const assignment = {
+    ...command,
+    destination: { kind: "table" as const, tableId },
+  }
+  await Promise.all([
+    staff.mutation(api.orders.assignDestination, assignment),
+    owner.mutation(api.orders.assignDestination, assignment),
+  ])
+  const assigned = await staff.query(api.orders.detail, command)
+  expect(
+    assigned.events.filter((event) => event.kind === "destination_changed")
+  ).toMatchObject([
+    {
+      previousDestination: null,
+      destination: { kind: "table", tableId, number: 4 },
+    },
+  ])
+  await Promise.all([
+    staff.mutation(api.orders.assignDestination, {
+      ...command,
+      destination: { kind: "takeaway" },
+    }),
+    owner.mutation(api.orders.assignDestination, {
+      ...command,
+      destination: { kind: "table", tableId: nextTable },
+    }),
+  ])
+  const detail = await staff.query(api.orders.detail, command)
+  const changes = detail.events.filter(
+    (event) => event.kind === "destination_changed"
+  )
+  expect(changes).toHaveLength(3)
+  expect(changes[1]?.previousDestination).toEqual({
+    kind: "table",
+    tableId,
+    number: 4,
+  })
+  expect(changes[2]?.previousDestination).toEqual(changes[1]?.destination)
+  expect(detail.order.destination).toEqual(changes[2]?.destination)
+  expect(
+    new Set(changes.slice(1).map((event) => event.destination?.kind))
+  ).toEqual(new Set(["table", "takeaway"]))
+  expect(detail.payment).toEqual(assigned.payment)
+  expect(detail.order).toMatchObject({ status: "pending", total: 2500 })
+})

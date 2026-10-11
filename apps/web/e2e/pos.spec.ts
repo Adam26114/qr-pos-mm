@@ -1,13 +1,35 @@
 import { expect, test } from "@playwright/test"
 
-test("cash counter bill is recovered after reload and completed through the live Orders page", async ({
+test("cash counter bill survives lost submission messages and a paid unassigned reload before completion", async ({
   page,
   browser,
   context,
 }) => {
-  test.setTimeout(60_000)
+  test.setTimeout(90_000)
   const errors: string[] = []
   page.on("pageerror", (error) => errors.push(error.message))
+  let droppedSubmissions = 0
+  // Lose the outbound command, then the real retry's acknowledgement. Other clients keep real traffic.
+  await page.routeWebSocket(/127\.0\.0\.1:3210/, (socket) => {
+    const server = socket.connectToServer()
+    let dropResponse = false
+    socket.onMessage((message) => {
+      const frame = JSON.parse(message.toString())
+      if (
+        droppedSubmissions < 2 &&
+        frame.type === "Mutation" &&
+        frame.udfPath === "orders:createCounter"
+      ) {
+        droppedSubmissions++
+        if (droppedSubmissions === 1) return
+        dropResponse = true
+      }
+      server.send(message)
+    })
+    server.onMessage((message) => {
+      if (!dropResponse) socket.send(message)
+    })
+  })
   await page.goto("/register")
   await page.getByLabel("Your name", { exact: true }).fill("POS owner")
   await page
@@ -70,11 +92,23 @@ test("cash counter bill is recovered after reload and completed through the live
   await cart
     .getByRole("button", { name: "Save cash order", exact: true })
     .click()
+  await expect.poll(() => droppedSubmissions).toBe(1)
+  await expect(
+    cart.getByText(
+      "Checking whether your order was saved. Keep this submission until its result is confirmed.",
+      { exact: true }
+    )
+  ).toBeVisible()
+  await page.reload()
+  await cart
+    .getByRole("button", { name: "Retry same submission", exact: true })
+    .click()
+  await expect.poll(() => droppedSubmissions).toBe(2)
+  await page.reload()
   await expect(cart.getByText("Order saved", { exact: true })).toBeVisible()
   await expect(
     cart.getByRole("button", { name: "Assign destination", exact: true })
   ).toHaveCount(0)
-  await page.reload()
   await expect(
     cart.getByText("No sugar · သကြားမပါ", { exact: true })
   ).toBeVisible()
@@ -88,7 +122,14 @@ test("cash counter bill is recovered after reload and completed through the live
       name: "Live orders",
       exact: true,
     })
+    await expect(queue.getByRole("heading", { level: 2 })).toHaveCount(1)
     await expect(queue.getByText("Unpaid", { exact: true })).toBeVisible()
+    await expect(
+      queue.getByRole("button", { name: "Start cooking", exact: true })
+    ).toBeDisabled()
+    await expect(
+      queue.getByRole("combobox", { name: "Destination", exact: true })
+    ).toHaveCount(0)
     await cart
       .getByRole("button", { name: "Payment received", exact: true })
       .click()
@@ -99,6 +140,17 @@ test("cash counter bill is recovered after reload and completed through the live
     await expect(
       queue.getByText("Cash received", { exact: true })
     ).toBeVisible()
+    await page.reload()
+    await expect(cart.getByText("Cash received", { exact: true })).toBeVisible()
+    await expect(cart.getByText("Unassigned", { exact: true })).toBeVisible()
+    await expect(
+      queue.getByRole("button", { name: "Start cooking", exact: true })
+    ).toBeDisabled()
+    await context.setOffline(true)
+    await expect(
+      cart.getByRole("button", { name: "Assign destination", exact: true })
+    ).toBeDisabled()
+    await context.setOffline(false)
     await cart
       .getByRole("button", { name: "Assign destination", exact: true })
       .click()
@@ -214,7 +266,7 @@ test("invited staff can take and hand over cash orders without owner menu contro
       .getByRole("region", { name: "Menu preview", exact: true })
       .getByText("1,000 MMK", { exact: true })
   ).toBeVisible()
-  await page.goto("/workspace/staff")
+  await page.getByRole("link", { name: "Staff", exact: true }).click()
   const email = `pos-staff-${crypto.randomUUID()}@example.com`
   await page.getByLabel("Staff email", { exact: true }).fill(email)
   await page.getByRole("button", { name: "Invite staff", exact: true }).click()

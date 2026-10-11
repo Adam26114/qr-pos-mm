@@ -8,6 +8,6 @@ Only new submissions require active service. Accepted orders can be recovered, p
 
 Convex subscriptions are authoritative. The cart holds only item IDs, quantities and a note. A persisted submission attempt is a receipt-recovery token and frozen command, never an offline order queue. Mutations require a live connection; uncertain outcomes reconcile against Convex before another submission. Unpaid and paid/unassigned orders remain visible after reload. System text is Burmese/English; authored content is unchanged.
 
-MMQR, guest QR ordering/tracking, cancellation/refunds and revenue reports remain future slices. This implements portions of the foundations in #5–#7 and cash counter ordering in #8; it does not complete the public QR journeys.
+Cash counter ordering completes #8, including lost-response recovery, paid/unassigned reload recovery, pre-expiry order completion and concurrent assignment verification. Public QR ordering/tracking and seated cash operations are implemented in #5–#7. MMQR, cancellation/refunds and revenue reports remain future slices.
 
 Verification seams remain the approved public Convex operations and real Playwright owner/staff journeys. Cover payment/state ordering, immutable bills, retries, expiry, store/role isolation, table retention, realtime updates and reload recovery.
