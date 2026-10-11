@@ -4,8 +4,19 @@ import { useState } from "react"
 import { useMutation, useQuery } from "convex/react"
 import { Button } from "@workspace/ui/components/button"
 import { Badge } from "@workspace/ui/components/badge"
+import { HugeiconsIcon } from "@hugeicons/react"
+import {
+  Add01Icon,
+  Edit02Icon,
+  Delete02Icon,
+  ShoppingCartAdd01Icon,
+  Image01Icon,
+} from "@hugeicons/core-free-icons"
 import { CatalogCard } from "@workspace/ui/composed/catalog-card"
-import { CatalogFilters } from "@workspace/ui/composed/catalog-filters"
+import {
+  CatalogSearch,
+  CatalogCategories,
+} from "@workspace/ui/composed/catalog-filters"
 import { EditorDialog } from "@workspace/ui/composed/editor-dialog"
 import { Feedback } from "@workspace/ui/composed/feedback"
 import { LoadingState } from "@workspace/ui/composed/loading-state"
@@ -122,57 +133,62 @@ function MenuCatalog({
     disabled: !connected,
   }
   return (
-    <section aria-label={copy.menuManagement} className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-3xl font-semibold">{copy.menu}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{pos.posIntro}</p>
-        </div>
-        {owner && (
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              disabled={!connected}
-              onClick={() => setDialog("qr")}
-            >
-              {publicCopy.menuQr}
-            </Button>
-            <Button
-              variant="outline"
-              disabled={!connected}
-              onClick={() => setDialog("categories")}
-            >
-              {copy.categories}
-            </Button>
-            <Button
-              variant="outline"
-              disabled={!connected}
-              onClick={() => setDialog("tables")}
-            >
-              {pos.tables}
-            </Button>
-            <Button
-              disabled={!connected || !categories.length}
-              onClick={() => {
-                setSaved(null)
-                setEditingItem(null)
-                setDialog("item")
-              }}
-            >
-              {copy.addItem}
-            </Button>
-          </div>
-        )}
-      </div>
+    <section aria-label={copy.menuManagement} className="space-y-4">
       {saved && <Feedback>{copy[saved]}</Feedback>}
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]">
         <section aria-label={copy.menuPreview} className="min-w-0 space-y-5">
-          <CatalogFilters
-            searchLabel={pos.search}
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="mr-auto font-heading text-2xl font-semibold">
+              {copy.menu}
+            </h1>
+            {owner && (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  disabled={!connected}
+                  onClick={() => setDialog("qr")}
+                >
+                  {publicCopy.menuQr}
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={!connected}
+                  onClick={() => setDialog("categories")}
+                >
+                  {copy.categories}
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={!connected}
+                  onClick={() => setDialog("tables")}
+                >
+                  {pos.tables}
+                </Button>
+                <Button
+                  disabled={!connected || !categories.length}
+                  onClick={() => {
+                    setSaved(null)
+                    setEditingItem(null)
+                    setDialog("item")
+                  }}
+                >
+                  <HugeiconsIcon icon={Add01Icon} aria-hidden="true" />
+                  {copy.addItem}
+                </Button>
+              </div>
+            )}
+            <div className="w-full min-w-0 sm:w-56">
+              <CatalogSearch
+                searchLabel={pos.search}
+                search={search}
+                onSearchChange={setSearch}
+              />
+            </div>
+          </div>
+          <CatalogCategories
+            tiles
             categoryLabel={pos.filterCategory}
             allLabel={pos.allItems}
-            search={search}
-            onSearchChange={setSearch}
             categories={categories.map((category) => ({
               id: category._id,
               label: category.name,
@@ -183,10 +199,11 @@ function MenuCatalog({
           {!categories.length && (
             <Feedback>{owner ? copy.noCategories : copy.noMenuItems}</Feedback>
           )}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 min-[1800px]:grid-cols-5 sm:gap-4 md:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
             {visible.map((item) => (
               <CatalogCard
                 key={item._id}
+                compact
                 title={item.name}
                 description={item.description}
                 price={formatMMK(item.price)}
@@ -197,11 +214,16 @@ function MenuCatalog({
                       alt={item.name}
                       fill
                       unoptimized
-                      sizes="(max-width: 640px) 100vw, 300px"
+                      sizes="(max-width: 768px) 50vw, 240px"
                       className="object-cover"
                     />
                   ) : (
-                    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                    <div className="flex h-full flex-col items-center justify-center gap-2 text-xs text-muted-foreground">
+                      <HugeiconsIcon
+                        icon={Image01Icon}
+                        aria-hidden="true"
+                        className="size-7 opacity-50"
+                      />
                       {pos.noPhoto}
                     </div>
                   )
@@ -212,46 +234,59 @@ function MenuCatalog({
                   ) : undefined
                 }
                 actions={
-                  <div className="space-y-2">
-                    <Button
-                      className="w-full"
-                      variant="secondary"
-                      disabled={
-                        !item.available || !connected || !!recovery.attempt
-                      }
-                      aria-label={`${pos.addToCart}: ${item.name}`}
-                      onClick={() => add(item._id)}
-                    >
-                      {pos.addToCart}
-                    </Button>
-                    {owner && (
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          disabled={!connected}
-                          onClick={() => {
-                            setSaved(null)
-                            setEditingItem(item._id)
-                            setDialog("item")
-                          }}
-                        >
-                          {copy.editItem}
-                        </Button>
-                        <ConfirmAction
-                          {...confirmation}
-                          label={copy.removeFromSale}
-                          title={copy.removeItemTitle}
-                          description={`${item.name} — ${copy.removeItemIntro}`}
-                          onConfirm={() => {
-                            if (!action.ready())
-                              return Promise.reject(new Error("Disconnected"))
-                            return removeItem({ storeId, itemId: item._id })
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    title={pos.addToCart}
+                    disabled={
+                      !item.available || !connected || !!recovery.attempt
+                    }
+                    aria-label={`${pos.addToCart}: ${item.name}`}
+                    onClick={() => add(item._id)}
+                  >
+                    <HugeiconsIcon
+                      icon={ShoppingCartAdd01Icon}
+                      aria-hidden="true"
+                      className="size-5"
+                    />
+                  </Button>
+                }
+                tools={
+                  owner ? (
+                    <>
+                      <Button
+                        size="icon-sm"
+                        variant="outline"
+                        aria-label={copy.editItem}
+                        title={copy.editItem}
+                        disabled={!connected}
+                        onClick={() => {
+                          setSaved(null)
+                          setEditingItem(item._id)
+                          setDialog("item")
+                        }}
+                      >
+                        <HugeiconsIcon icon={Edit02Icon} aria-hidden="true" />
+                      </Button>
+                      <ConfirmAction
+                        {...confirmation}
+                        label={copy.removeFromSale}
+                        triggerIcon={
+                          <HugeiconsIcon
+                            icon={Delete02Icon}
+                            aria-hidden="true"
+                          />
+                        }
+                        title={copy.removeItemTitle}
+                        description={`${item.name} — ${copy.removeItemIntro}`}
+                        onConfirm={() => {
+                          if (!action.ready())
+                            return Promise.reject(new Error("Disconnected"))
+                          return removeItem({ storeId, itemId: item._id })
+                        }}
+                      />
+                    </>
+                  ) : undefined
                 }
               />
             ))}

@@ -1,5 +1,8 @@
 "use client"
 import Link from "next/link"
+import Image from "next/image"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { ShoppingCart01Icon, Image01Icon } from "@hugeicons/core-free-icons"
 import type { Dispatch, SetStateAction } from "react"
 import { useMutation, useQuery } from "convex/react"
 import { ConvexError } from "convex/values"
@@ -118,14 +121,17 @@ export function PosCart({
     })
   }
   return (
-    <section aria-label={pos.cart} className="min-w-0 xl:sticky xl:top-4">
-      <Card>
-        <CardHeader>
+    <section
+      aria-label={pos.cart}
+      className="min-w-0 space-y-4 xl:sticky xl:top-4"
+    >
+      <Card className="gap-0 py-0 shadow-none ring-border">
+        <CardHeader className="border-b bg-muted/20 p-4">
           <CardTitle>
             <h2>{pos.cart}</h2>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-5">
+        <CardContent className="flex min-h-56 flex-col gap-5 p-4 xl:min-h-[calc(100dvh-22rem)]">
           {detail ? (
             <>
               <Badge variant="secondary">{pos.saved}</Badge>
@@ -173,9 +179,17 @@ export function PosCart({
           ) : (
             <>
               {!lines.length && (
-                <p className="text-sm text-muted-foreground">{pos.emptyCart}</p>
+                <div className="flex flex-1 flex-col items-center justify-center gap-4 py-16 text-center text-muted-foreground">
+                  <HugeiconsIcon
+                    icon={ShoppingCart01Icon}
+                    aria-hidden="true"
+                    className="size-10 opacity-40"
+                  />
+                  <p className="max-w-52 text-sm">{pos.emptyCart}</p>
+                </div>
               )}
               <CartItems
+                compact
                 labels={{
                   increase: pos.increase,
                   decrease: pos.decrease,
@@ -190,6 +204,20 @@ export function PosCart({
                     quantity: line.quantity,
                     amount: item ? formatMMK(item.price * line.quantity) : "—",
                     available: !!item?.available,
+                    image: item?.photoUrl ? (
+                      <Image
+                        src={item.photoUrl}
+                        alt=""
+                        fill
+                        unoptimized
+                        sizes="48px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-muted-foreground">
+                        <HugeiconsIcon icon={Image01Icon} aria-hidden="true" />
+                      </div>
+                    ),
                   }
                 })}
                 onQuantity={(id, delta) =>
@@ -201,41 +229,52 @@ export function PosCart({
                   )
                 }
               />
-              <Field>
-                <FieldLabel htmlFor="cart-note">{pos.note}</FieldLabel>
-                <Textarea
-                  id="cart-note"
-                  value={note}
-                  onChange={(event) => setNote(event.target.value)}
-                  maxLength={2000}
-                />
-              </Field>
-              <div className="flex justify-between gap-4 border-t pt-4 font-semibold">
-                <span>{pos.total}</span>
-                <span className="tabular-nums">{formatMMK(total)}</span>
-              </div>
-              {tableData && !tableData.acceptingOrders && (
-                <Feedback>{pos.expired}</Feedback>
+              {lines.length > 0 && (
+                <Field className="mt-auto pt-4">
+                  <FieldLabel htmlFor="cart-note">{pos.note}</FieldLabel>
+                  <Textarea
+                    id="cart-note"
+                    value={note}
+                    onChange={(event) => setNote(event.target.value)}
+                    maxLength={2000}
+                  />
+                </Field>
               )}
-              <SubmitButton
-                className="w-full"
-                type="button"
-                pending={action.pending}
-                pendingLabel={copy.working}
-                disabled={
-                  invalid || !action.connected || !tableData?.acceptingOrders
-                }
-                onClick={submit}
-              >
-                {pos.saveOrder}
-              </SubmitButton>
-              <p className="text-xs text-muted-foreground">{pos.cashFlow}</p>
             </>
           )}
           {action.failure && <Feedback tone="error">{action.failure}</Feedback>}
-          <p className="text-xs text-muted-foreground">{pos.mmqrLater}</p>
         </CardContent>
       </Card>
+      {!attempt && lines.length > 0 && (
+        <Card className="gap-0 py-0 shadow-none ring-border">
+          <CardContent className="gap-4 p-4">
+            <div className="flex justify-between gap-4 font-semibold">
+              <span>{pos.total}</span>
+              <span className="tabular-nums">{formatMMK(total)}</span>
+            </div>
+            {tableData && !tableData.acceptingOrders && (
+              <Feedback>{pos.expired}</Feedback>
+            )}
+            <SubmitButton
+              className="w-full"
+              type="button"
+              pending={action.pending}
+              pendingLabel={copy.working}
+              disabled={
+                invalid || !action.connected || !tableData?.acceptingOrders
+              }
+              onClick={submit}
+            >
+              {pos.saveOrder}
+            </SubmitButton>
+            <p className="text-xs text-muted-foreground">{pos.cashFlow}</p>
+            <p className="text-xs text-muted-foreground">{pos.mmqrLater}</p>
+          </CardContent>
+        </Card>
+      )}
+      {!attempt && !lines.length && tableData && !tableData.acceptingOrders && (
+        <Feedback>{pos.expired}</Feedback>
+      )}
     </section>
   )
 }

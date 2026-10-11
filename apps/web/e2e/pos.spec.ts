@@ -71,6 +71,9 @@ test("cash counter bill is recovered after reload and completed through the live
     .getByRole("button", { name: "Save cash order", exact: true })
     .click()
   await expect(cart.getByText("Order saved", { exact: true })).toBeVisible()
+  await expect(
+    cart.getByRole("button", { name: "Assign destination", exact: true })
+  ).toHaveCount(0)
   await page.reload()
   await expect(
     cart.getByText("No sugar · သကြားမပါ", { exact: true })
@@ -97,12 +100,27 @@ test("cash counter bill is recovered after reload and completed through the live
       queue.getByText("Cash received", { exact: true })
     ).toBeVisible()
     await cart
-      .getByRole("combobox", { name: "Destination", exact: true })
-      .click()
-    await page.getByRole("option", { name: "Table 4", exact: true }).click()
-    await cart
       .getByRole("button", { name: "Assign destination", exact: true })
       .click()
+    const destination = page.getByRole("dialog", {
+      name: "Destination",
+      exact: true,
+    })
+    await destination
+      .getByRole("button", { name: "Table 4", exact: true })
+      .click()
+    await context.setOffline(true)
+    await expect(
+      destination.getByRole("button", {
+        name: "Assign destination",
+        exact: true,
+      })
+    ).toBeDisabled()
+    await context.setOffline(false)
+    await destination
+      .getByRole("button", { name: "Assign destination", exact: true })
+      .click()
+    await expect(destination).not.toBeVisible()
     await expect(
       queue.getByText("Table 4", { exact: true }).first()
     ).toBeVisible()
@@ -265,10 +283,16 @@ test("invited staff can take and hand over cash orders without owner menu contro
       .getByRole("button", { name: "Payment received", exact: true })
       .click()
     await staff
-      .getByRole("combobox", { name: "Destination", exact: true })
+      .getByRole("button", { name: "Assign destination", exact: true })
       .click()
-    await staff.getByRole("option", { name: "Takeaway", exact: true }).click()
-    await staff
+    const destination = staff.getByRole("dialog", {
+      name: "Destination",
+      exact: true,
+    })
+    await destination
+      .getByRole("button", { name: "Takeaway", exact: true })
+      .click()
+    await destination
       .getByRole("button", { name: "Assign destination", exact: true })
       .click()
     await expect(page.getByText("Takeaway", { exact: true })).toBeVisible()

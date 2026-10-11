@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
 import { Card, CardContent } from "@workspace/ui/components/card"
+import { cn } from "cn"
 
 export function CatalogCard({
   title,
@@ -8,6 +9,8 @@ export function CatalogCard({
   price,
   status,
   actions,
+  compact = false,
+  tools,
 }: {
   title: string
   description?: string
@@ -15,13 +18,20 @@ export function CatalogCard({
   price: ReactNode
   status?: ReactNode
   actions: ReactNode
+  compact?: boolean
+  tools?: ReactNode
 }) {
   return (
     <Card className="h-full gap-0 overflow-hidden py-0">
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
         {image}
+        {tools && (
+          <div className="absolute top-2 right-2 flex gap-1">{tools}</div>
+        )}
       </div>
-      <CardContent className="flex flex-1 flex-col gap-3 p-4">
+      <CardContent
+        className={cn("flex flex-1 flex-col gap-3 p-4", compact && "gap-2 p-3")}
+      >
         <div className="min-w-0 flex-1">
           <h3 className="font-medium [overflow-wrap:anywhere]">{title}</h3>
           {description && (
@@ -31,10 +41,17 @@ export function CatalogCard({
           )}
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="font-medium tabular-nums">{price}</span>
-          {status}
+          <span
+            className={cn(
+              "font-medium tabular-nums",
+              compact && "text-muted-foreground"
+            )}
+          >
+            {price}
+          </span>
+          {compact ? actions : status}
         </div>
-        {actions}
+        {compact ? status : actions}
       </CardContent>
     </Card>
   )

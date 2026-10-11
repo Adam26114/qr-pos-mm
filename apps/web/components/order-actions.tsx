@@ -14,6 +14,8 @@ import {
 import { SubmitButton } from "@workspace/ui/composed/submit-button"
 import { ConfirmAction } from "@workspace/ui/composed/confirm-action"
 import { Feedback } from "@workspace/ui/composed/feedback"
+import { EditorDialog } from "@workspace/ui/composed/editor-dialog"
+import { DestinationTiles } from "@workspace/ui/composed/destination-tiles"
 import { api } from "@/convex/_generated/api"
 import type { Id } from "@/convex/_generated/dataModel"
 import { formatMMK } from "@/lib/menu"
@@ -39,6 +41,7 @@ export function OrderActions({
   const data = useQuery(api.tables.list, { storeId: order.storeId })
   const [selected, setSelected] = useState<string | null>(null)
   const [correcting, setCorrecting] = useState(false)
+  const [choosing, setChoosing] = useState(false)
   const command = { storeId: order.storeId, orderId: order._id }
   const id = `destination-${order._id}`
   const canAssign = order.source === "qr" || !!order.payment
@@ -51,6 +54,33 @@ export function OrderActions({
       label: `${pos.table} ${table.number}`,
     })),
   ]
+  const assignment = (
+    <SubmitButton
+      type="button"
+      pending={action.pending}
+      pendingLabel={copy.working}
+      disabled={
+        !selected ||
+        !action.connected ||
+        !options.some((option) => option.value === selected)
+      }
+      onClick={() =>
+        action.run(async () => {
+          await assign({
+            ...command,
+            destination:
+              selected === "takeaway"
+                ? { kind: "takeaway" }
+                : { kind: "table", tableId: selected as Id<"tables"> },
+          })
+          setCorrecting(false)
+          setChoosing(false)
+        })
+      }
+    >
+      {pos.assignDestination}
+    </SubmitButton>
+  )
   return (
     <div className="space-y-3">
       {!order.payment && (
@@ -68,61 +98,52 @@ export function OrderActions({
           }}
         />
       )}
-      {canAssign && (!order.destination || correcting) && (
-        <>
-          <Field>
-            <FieldLabel htmlFor={id}>{pos.destination}</FieldLabel>
-            <Select
-              value={selected}
-              onValueChange={setSelected}
-              items={options}
-              disabled={!action.connected || action.pending}
-            >
-              <SelectTrigger id={id} className="w-full">
-                <SelectValue placeholder={pos.chooseDestination} />
-              </SelectTrigger>
-              <SelectContent>
-                {options.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-          <SubmitButton
-            type="button"
-            pending={action.pending}
-            pendingLabel={copy.working}
-            disabled={
-              !selected ||
-              !action.connected ||
-              !options.some((option) => option.value === selected)
-            }
-            onClick={() =>
-              action.run(async () => {
-                await assign({
-                  ...command,
-                  destination:
-                    selected === "takeaway"
-                      ? { kind: "takeaway" }
-                      : { kind: "table", tableId: selected as Id<"tables"> },
-                })
-                setCorrecting(false)
-              })
-            }
+      {canAssign &&
+        (!order.destination || correcting) &&
+        (checkout ? (
+          <Button
+            variant="outline"
+            disabled={!action.connected || action.pending}
+            onClick={() => {
+              setSelected(null)
+              setChoosing(true)
+            }}
           >
             {pos.assignDestination}
-          </SubmitButton>
-        </>
-      )}
+          </Button>
+        ) : (
+          <>
+            <Field>
+              <FieldLabel htmlFor={id}>{pos.destination}</FieldLabel>
+              <Select
+                value={selected}
+                onValueChange={setSelected}
+                items={options}
+                disabled={!action.connected || action.pending}
+              >
+                <SelectTrigger id={id} className="w-full">
+                  <SelectValue placeholder={pos.chooseDestination} />
+                </SelectTrigger>
+                <SelectContent>
+                  {options.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            {assignment}
+          </>
+        ))}
       {canAssign && order.destination && !correcting && (
         <Button
           variant="outline"
           disabled={!action.connected || action.pending}
           onClick={() => {
             setSelected(null)
-            setCorrecting(true)
+            if (checkout) setChoosing(true)
+            else setCorrecting(true)
           }}
         >
           {pos.correctDestination}
@@ -153,6 +174,26 @@ export function OrderActions({
         </SubmitButton>
       )}
       {action.failure && <Feedback tone="error">{action.failure}</Feedback>}
+      {checkout && (
+        <EditorDialog
+          open={choosing && canAssign}
+          title={pos.destination}
+          description={pos.chooseDestination}
+          closeLabel={pos.close}
+          pending={action.pending}
+          onClose={() => setChoosing(false)}
+        >
+          <DestinationTiles
+            label={pos.destination}
+            options={options}
+            value={selected}
+            onChange={setSelected}
+            disabled={!action.connected || action.pending}
+          />
+          {assignment}
+          {action.failure && <Feedback tone="error">{action.failure}</Feedback>}
+        </EditorDialog>
+      )}
     </div>
   )
 }

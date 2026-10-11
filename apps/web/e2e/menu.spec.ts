@@ -192,6 +192,34 @@ test("photos persist and live menu updates reach another owner session on Burmes
   await page
     .getByLabel("ဓာတ်ပုံ", { exact: true })
     .setInputFiles({ name: "toast.png", mimeType: "image/png", buffer: png })
+  const selectedPhoto = page
+    .getByRole("dialog")
+    .getByRole("img", { name: "toast.png", exact: true })
+  await expect(selectedPhoto).toBeVisible()
+  await expect
+    .poll(() =>
+      selectedPhoto.evaluate(
+        (image) => (image as HTMLImageElement).naturalWidth
+      )
+    )
+    .toBeGreaterThan(0)
+  await page
+    .getByRole("button", { name: "ဓာတ်ပုံဖယ်ရှားမည်", exact: true })
+    .click()
+  await expect(selectedPhoto).toHaveCount(0)
+  await page
+    .getByLabel("ဓာတ်ပုံ", { exact: true })
+    .setInputFiles({ name: "toast.png", mimeType: "image/png", buffer: png })
+  await expect(selectedPhoto).toBeVisible()
+  await page.screenshot({
+    path: "test-results/menu-editor-mobile-my.png",
+    fullPage: true,
+  })
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth
+    )
+  ).toBe(true)
   await page
     .getByRole("dialog")
     .getByRole("button", { name: "ပစ္စည်းထည့်မည်", exact: true })

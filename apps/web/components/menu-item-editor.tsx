@@ -1,7 +1,13 @@
 "use client"
 
 import Image from "next/image"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import { HugeiconsIcon } from "@hugeicons/react"
+import {
+  Cancel01Icon,
+  ImageUpload01Icon,
+  Upload04Icon,
+} from "@hugeicons/core-free-icons"
 import { Controller, useForm } from "react-hook-form"
 import { useConvex, useMutation } from "convex/react"
 import { ConvexError } from "convex/values"
@@ -68,9 +74,25 @@ export function MenuItemEditor({
   const save = useMutation(api.menu.saveItem)
   const [failure, setFailure] = useState<MessageKey | null>(null)
   const [saved, setSaved] = useState(false)
-  const [file, setFile] = useState<File | null>(null)
+  const [selectedPhoto, setSelectedPhoto] = useState<{
+    file: File
+    url: string
+  } | null>(null)
   const [removePhoto, setRemovePhoto] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
+  const file = selectedPhoto?.file ?? null
+  const previewUrl = selectedPhoto?.url
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+    }
+  }, [previewUrl])
+  function chooseFile(nextFile: File | null) {
+    setSelectedPhoto(
+      nextFile ? { file: nextFile, url: URL.createObjectURL(nextFile) } : null
+    )
+    setRemovePhoto(false)
+  }
   const initial: Fields = {
     name: item?.name ?? "",
     description: item?.description ?? "",
@@ -159,7 +181,7 @@ export function MenuItemEditor({
         categoryId: categories[0]!._id,
         available: true,
       })
-      setFile(null)
+      setSelectedPhoto(null)
       setRemovePhoto(false)
       if (fileInput.current) fileInput.current.value = ""
       setSaved(true)
@@ -170,12 +192,18 @@ export function MenuItemEditor({
       onPendingChange?.(false)
     }
   }
+  const photoUrl = selectedPhoto?.url ?? (!removePhoto ? item?.photoUrl : null)
   const content = (
     <>
-      <form onSubmit={handleSubmit(submit)} noValidate>
-        <FieldSet disabled={disabled}>
+      <form
+        onSubmit={(event) => {
+          void handleSubmit(submit)(event)
+        }}
+        noValidate
+      >
+        <FieldSet disabled={disabled} className="gap-5">
           <TextField
-            autoFocus={!!item}
+            autoFocus
             id="item-name"
             label={copy.itemName}
             {...register("name")}
@@ -183,12 +211,168 @@ export function MenuItemEditor({
               errors.name ? formError(errors.name.message, copy) : undefined
             }
           />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <TextField
+              id="item-price"
+              label={copy.itemPrice}
+              description={copy.finalPriceNote}
+              type="number"
+              min="1"
+              step="1"
+              inputMode="numeric"
+              {...register("price")}
+              error={
+                errors.price ? formError(errors.price.message, copy) : undefined
+              }
+            />
+            <Controller
+              name="categoryId"
+              control={control}
+              render={({ field }) => (
+                <Field data-invalid={!!errors.categoryId} className="min-w-0">
+                  <FieldLabel htmlFor="item-category">
+                    {copy.itemCategory}
+                  </FieldLabel>
+                  <Select
+                    value={field.value}
+                    onValueChange={(value) => field.onChange(value ?? "")}
+                    name={field.name}
+                    disabled={disabled}
+                    items={categories.map((category) => ({
+                      value: category._id,
+                      label: category.name,
+                    }))}
+                  >
+                    <SelectTrigger
+                      id="item-category"
+                      ref={field.ref}
+                      onBlur={field.onBlur}
+                      className="w-full"
+                      aria-invalid={!!errors.categoryId}
+                      aria-describedby={
+                        errors.categoryId ? "category-error" : undefined
+                      }
+                    >
+                      <SelectValue placeholder={copy.chooseCategory} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category._id} value={category._id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.categoryId && (
+                    <FieldError id="category-error">
+                      {formError(errors.categoryId.message, copy)}
+                    </FieldError>
+                  )}
+                </Field>
+              )}
+            />
+          </div>
+          <Field>
+            <FieldLabel id="photo-label" htmlFor="item-photo">
+              {copy.itemPhoto}
+            </FieldLabel>
+            <Input
+              id="item-photo"
+              type="file"
+              className="hidden"
+              aria-label={copy.itemPhoto}
+              accept="image/png,image/jpeg,image/webp"
+              ref={fileInput}
+              onChange={(event) => chooseFile(event.target.files?.[0] ?? null)}
+            />
+            <div
+              className="relative flex min-h-52 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-input bg-muted/20 p-5 text-center"
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={(event) => {
+                event.preventDefault()
+                if (!disabled && event.dataTransfer.files.length)
+                  chooseFile(event.dataTransfer.files[0] ?? null)
+              }}
+            >
+              {photoUrl ? (
+                <div className="relative h-40 w-full">
+                  <Image
+                    src={photoUrl}
+                    alt={file?.name ?? item?.name ?? copy.itemPhoto}
+                    fill
+                    unoptimized
+                    className="rounded-md object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="flex size-12 items-center justify-center rounded-full border bg-background text-muted-foreground">
+                  <HugeiconsIcon
+                    icon={ImageUpload01Icon}
+                    size={22}
+                    aria-hidden="true"
+                  />
+                </div>
+              )}
+              {(file || (!removePhoto && item?.photoId)) && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="icon-sm"
+                  className="absolute top-3 right-3 z-10 rounded-full"
+                  aria-label={copy.removePhoto}
+                  onClick={() => {
+                    setSelectedPhoto(null)
+                    setRemovePhoto(true)
+                    if (fileInput.current) fileInput.current.value = ""
+                  }}
+                >
+                  <HugeiconsIcon
+                    icon={Cancel01Icon}
+                    size={16}
+                    aria-hidden="true"
+                  />
+                </Button>
+              )}
+              <p
+                id="photo-current"
+                className="max-w-full text-sm [overflow-wrap:anywhere] text-muted-foreground"
+              >
+                {file?.name ??
+                  (!removePhoto && item?.photoId
+                    ? copy.currentPhoto
+                    : copy.noPhotoChosen)}
+              </p>
+              <FieldDescription id="photo-note" className="text-center">
+                {copy.photoNote}
+              </FieldDescription>
+              <Button
+                id="choose-photo"
+                type="button"
+                variant="outline"
+                aria-describedby="photo-label photo-note photo-current"
+                onClick={() => fileInput.current?.click()}
+              >
+                <HugeiconsIcon
+                  icon={Upload04Icon}
+                  size={16}
+                  aria-hidden="true"
+                />
+                {copy.choosePhoto}
+              </Button>
+            </div>
+            {file && (
+              <FieldDescription role="status">
+                {copy.photoSelected}
+              </FieldDescription>
+            )}
+          </Field>
           <Field data-invalid={!!errors.description}>
             <FieldLabel htmlFor="item-description">
               {copy.itemDescription}
             </FieldLabel>
             <Textarea
               id="item-description"
+              className="min-h-20"
               {...register("description")}
               aria-invalid={!!errors.description}
               aria-describedby={`description-note${errors.description ? " description-error" : ""}`}
@@ -202,65 +386,6 @@ export function MenuItemEditor({
               </FieldError>
             )}
           </Field>
-          <Controller
-            name="categoryId"
-            control={control}
-            render={({ field }) => (
-              <Field data-invalid={!!errors.categoryId}>
-                <FieldLabel htmlFor="item-category">
-                  {copy.itemCategory}
-                </FieldLabel>
-                <Select
-                  value={field.value}
-                  onValueChange={(value) => field.onChange(value ?? "")}
-                  name={field.name}
-                  disabled={disabled}
-                  items={categories.map((category) => ({
-                    value: category._id,
-                    label: category.name,
-                  }))}
-                >
-                  <SelectTrigger
-                    id="item-category"
-                    ref={field.ref}
-                    onBlur={field.onBlur}
-                    className="w-full"
-                    aria-invalid={!!errors.categoryId}
-                    aria-describedby={
-                      errors.categoryId ? "category-error" : undefined
-                    }
-                  >
-                    <SelectValue placeholder={copy.chooseCategory} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category._id} value={category._id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.categoryId && (
-                  <FieldError id="category-error">
-                    {formError(errors.categoryId.message, copy)}
-                  </FieldError>
-                )}
-              </Field>
-            )}
-          />
-          <TextField
-            id="item-price"
-            label={copy.itemPrice}
-            description={copy.finalPriceNote}
-            type="number"
-            min="1"
-            step="1"
-            inputMode="numeric"
-            {...register("price")}
-            error={
-              errors.price ? formError(errors.price.message, copy) : undefined
-            }
-          />
           <Controller
             name="available"
             control={control}
@@ -281,75 +406,15 @@ export function MenuItemEditor({
               </Field>
             )}
           />
-          <Field>
-            <FieldLabel id="photo-label" htmlFor="item-photo">
-              {copy.itemPhoto}
-            </FieldLabel>
-            <Input
-              id="item-photo"
-              type="file"
-              className="hidden"
-              aria-label={copy.itemPhoto}
-              accept="image/png,image/jpeg,image/webp"
-              ref={fileInput}
-              onChange={(event) => {
-                setFile(event.target.files?.[0] ?? null)
-                setRemovePhoto(false)
-              }}
-            />
-            <Button
-              id="choose-photo"
-              type="button"
-              variant="outline"
-              aria-describedby="photo-label photo-note photo-current"
-              onClick={() => fileInput.current?.click()}
+          <div className="flex justify-end border-t pt-4">
+            <SubmitButton
+              className="w-full sm:w-auto"
+              pending={isSubmitting}
+              pendingLabel={copy.working}
             >
-              {copy.choosePhoto}
-            </Button>
-            <p
-              id="photo-current"
-              className="text-sm [overflow-wrap:anywhere] text-muted-foreground"
-            >
-              {file?.name ??
-                (!removePhoto && item?.photoId
-                  ? copy.currentPhoto
-                  : copy.noPhotoChosen)}
-            </p>
-            <FieldDescription id="photo-note">
-              {copy.photoNote}
-            </FieldDescription>
-          </Field>
-          {file && (
-            <p className="text-sm text-muted-foreground">
-              {copy.photoSelected}
-            </p>
-          )}
-          {!removePhoto && item?.photoUrl && (
-            <Image
-              src={item.photoUrl}
-              alt={item.name}
-              width={96}
-              height={96}
-              unoptimized
-              className="size-24 rounded-xl object-cover"
-            />
-          )}
-          {(file || (!removePhoto && item?.photoId)) && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setFile(null)
-                setRemovePhoto(true)
-                if (fileInput.current) fileInput.current.value = ""
-              }}
-            >
-              {copy.removePhoto}
-            </Button>
-          )}
-          <SubmitButton pending={isSubmitting} pendingLabel={copy.working}>
-            {item ? copy.saveItem : copy.addItem}
-          </SubmitButton>
+              {item ? copy.saveItem : copy.addItem}
+            </SubmitButton>
+          </div>
         </FieldSet>
         {failure && (
           <Feedback tone="error" className="mt-4">

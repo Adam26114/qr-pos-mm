@@ -14,11 +14,12 @@ Use the existing shared patterns first:
 - `SubmitButton`: Button, a decorative Spinner, pending label, busy state, and disabled state. Defaults to form submission; pass `type="button"` for an asynchronous action outside a form.
 - `Feedback`: Alert and its description, with assertive error or polite status semantics.
 - `FormCard`: Card header, heading, description, content, and optional footer for account and onboarding forms.
-- `ConfirmAction`: AlertDialog with an accessible title/description, cancel action, pending command, and failure feedback. Keeps the confirmation open if the command fails. Callers provide all copy and the authorized command.
+- `ConfirmAction`: AlertDialog with an accessible title/description, cancel action, pending command, and failure feedback. Keeps the confirmation open if the command fails. Callers provide all copy and the authorized command; an optional trigger icon keeps the same accessible action label.
 - `LoadingState`: Card, localized status text, and decorative Skeletons.
-- `CatalogCard`: photo, authored title/description, price, status, and caller-supplied actions in a responsive Card.
-- `CatalogFilters`: accessible search and horizontally scrolling category buttons; callers supply labels, options, and transient filter state.
-- `CartItems`: item amounts, availability, accessible quantity/remove controls, or fixed reviewed quantities; callers provide entries, labels and handlers. Used by counter POS and the guest cart.
+- `CatalogCard`: photo, authored title/description, price, status, and caller-supplied actions in a responsive Card. The compact POS variant keeps the cart action beside the price and accepts owner tools over the photo.
+- `CatalogFilters`: accessible search and horizontally scrolling category buttons; callers supply labels, options, and transient filter state. `CatalogSearch` and `CatalogCategories` can be composed separately for a toolbar; the category tiles remain text-only.
+- `CartItems`: item amounts, availability, accessible quantity/remove controls, or fixed reviewed quantities; callers provide entries, labels and handlers. Used by counter POS and the guest cart. The compact POS variant accepts caller-rendered thumbnails and grouped quantity controls.
+- `DestinationTiles`: selectable options with pressed state for table/Takeaway dialogs. Callers own the available options, selection, and assignment command.
 - `EditorDialog`: controlled Dialog with a localized title, description and Close action, keeping pending commands open.
 
 ## Composition rules
