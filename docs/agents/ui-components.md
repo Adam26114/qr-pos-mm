@@ -20,7 +20,7 @@ Use the existing shared patterns first:
 - `CatalogFilters`: accessible search and horizontally scrolling category buttons; callers supply labels, options, and transient filter state. `CatalogSearch` and `CatalogCategories` can be composed separately for a toolbar; the category tiles remain text-only.
 - `CartItems`: item amounts, availability, accessible quantity/remove controls, or fixed reviewed quantities; callers provide entries, labels and handlers. Used by counter POS and the guest cart. The compact POS variant accepts caller-rendered thumbnails and grouped quantity controls.
 - `DestinationTiles`: selectable options with pressed state for table/Takeaway dialogs. Callers own the available options, selection, and assignment command.
-- `EditorDialog`: controlled Dialog with a localized title, description and Close action, keeping pending commands open.
+- `EditorDialog`: controlled Dialog with a localized title, description and Close action, keeping pending commands open. Its form layout fixes the header and lets the child form own scrolling and one footer action row instead of appending another Close button.
 
 ## Composition rules
 

@@ -341,6 +341,7 @@ function MenuCatalog({
           </EditorDialog>
           <EditorDialog
             open={dialog === "item"}
+            formLayout={categories.length > 0 && (!editingItem || !!item)}
             title={editingItem ? copy.editItem : copy.addItem}
             closeLabel={pos.close}
             pending={pending}

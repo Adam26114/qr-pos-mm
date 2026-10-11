@@ -24,6 +24,8 @@ import {
 import { Input } from "@workspace/ui/components/input"
 import { Textarea } from "@workspace/ui/components/textarea"
 import { Switch } from "@workspace/ui/components/switch"
+import { DialogFooter } from "@workspace/ui/components/dialog"
+import { cn } from "@workspace/ui/lib/utils"
 import {
   Select,
   SelectTrigger,
@@ -196,240 +198,256 @@ export function MenuItemEditor({
   const content = (
     <>
       <form
+        className={embedded ? "flex min-h-0 flex-1 flex-col" : undefined}
         onSubmit={(event) => {
           void handleSubmit(submit)(event)
         }}
         noValidate
       >
-        <FieldSet disabled={disabled} className="gap-5">
-          <TextField
-            autoFocus
-            id="item-name"
-            label={copy.itemName}
-            {...register("name")}
-            error={
-              errors.name ? formError(errors.name.message, copy) : undefined
-            }
-          />
-          <div className="grid gap-4 sm:grid-cols-2">
+        <div
+          className={
+            embedded ? "min-h-0 flex-1 overflow-y-auto px-6 py-5" : undefined
+          }
+        >
+          <FieldSet disabled={disabled} className="gap-5">
             <TextField
-              id="item-price"
-              label={copy.itemPrice}
-              description={copy.finalPriceNote}
-              type="number"
-              min="1"
-              step="1"
-              inputMode="numeric"
-              {...register("price")}
+              autoFocus
+              id="item-name"
+              label={copy.itemName}
+              {...register("name")}
               error={
-                errors.price ? formError(errors.price.message, copy) : undefined
+                errors.name ? formError(errors.name.message, copy) : undefined
               }
             />
-            <Controller
-              name="categoryId"
-              control={control}
-              render={({ field }) => (
-                <Field data-invalid={!!errors.categoryId} className="min-w-0">
-                  <FieldLabel htmlFor="item-category">
-                    {copy.itemCategory}
-                  </FieldLabel>
-                  <Select
-                    value={field.value}
-                    onValueChange={(value) => field.onChange(value ?? "")}
-                    name={field.name}
-                    disabled={disabled}
-                    items={categories.map((category) => ({
-                      value: category._id,
-                      label: category.name,
-                    }))}
-                  >
-                    <SelectTrigger
-                      id="item-category"
-                      ref={field.ref}
-                      onBlur={field.onBlur}
-                      className="w-full"
-                      aria-invalid={!!errors.categoryId}
-                      aria-describedby={
-                        errors.categoryId ? "category-error" : undefined
-                      }
+            <div className="grid gap-4 sm:grid-cols-2">
+              <TextField
+                id="item-price"
+                label={copy.itemPrice}
+                description={copy.finalPriceNote}
+                type="number"
+                min="1"
+                step="1"
+                inputMode="numeric"
+                {...register("price")}
+                error={
+                  errors.price
+                    ? formError(errors.price.message, copy)
+                    : undefined
+                }
+              />
+              <Controller
+                name="categoryId"
+                control={control}
+                render={({ field }) => (
+                  <Field data-invalid={!!errors.categoryId} className="min-w-0">
+                    <FieldLabel htmlFor="item-category">
+                      {copy.itemCategory}
+                    </FieldLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={(value) => field.onChange(value ?? "")}
+                      name={field.name}
+                      disabled={disabled}
+                      items={categories.map((category) => ({
+                        value: category._id,
+                        label: category.name,
+                      }))}
                     >
-                      <SelectValue placeholder={copy.chooseCategory} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category._id} value={category._id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.categoryId && (
-                    <FieldError id="category-error">
-                      {formError(errors.categoryId.message, copy)}
-                    </FieldError>
-                  )}
-                </Field>
-              )}
-            />
-          </div>
-          <Field>
-            <FieldLabel id="photo-label" htmlFor="item-photo">
-              {copy.itemPhoto}
-            </FieldLabel>
-            <Input
-              id="item-photo"
-              type="file"
-              className="hidden"
-              aria-label={copy.itemPhoto}
-              accept="image/png,image/jpeg,image/webp"
-              ref={fileInput}
-              onChange={(event) => chooseFile(event.target.files?.[0] ?? null)}
-            />
-            <div
-              className="relative flex min-h-52 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-input bg-muted/20 p-5 text-center"
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={(event) => {
-                event.preventDefault()
-                if (!disabled && event.dataTransfer.files.length)
-                  chooseFile(event.dataTransfer.files[0] ?? null)
-              }}
-            >
-              {photoUrl ? (
-                <div className="relative h-40 w-full">
-                  <Image
-                    src={photoUrl}
-                    alt={file?.name ?? item?.name ?? copy.itemPhoto}
-                    fill
-                    unoptimized
-                    className="rounded-md object-contain"
-                  />
-                </div>
-              ) : (
-                <div className="flex size-12 items-center justify-center rounded-full border bg-background text-muted-foreground">
-                  <HugeiconsIcon
-                    icon={ImageUpload01Icon}
-                    size={22}
-                    aria-hidden="true"
-                  />
-                </div>
-              )}
-              {(file || (!removePhoto && item?.photoId)) && (
+                      <SelectTrigger
+                        id="item-category"
+                        ref={field.ref}
+                        onBlur={field.onBlur}
+                        className="w-full"
+                        aria-invalid={!!errors.categoryId}
+                        aria-describedby={
+                          errors.categoryId ? "category-error" : undefined
+                        }
+                      >
+                        <SelectValue placeholder={copy.chooseCategory} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category._id} value={category._id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.categoryId && (
+                      <FieldError id="category-error">
+                        {formError(errors.categoryId.message, copy)}
+                      </FieldError>
+                    )}
+                  </Field>
+                )}
+              />
+            </div>
+            <Field>
+              <FieldLabel id="photo-label" htmlFor="item-photo">
+                {copy.itemPhoto}
+              </FieldLabel>
+              <Input
+                id="item-photo"
+                type="file"
+                className="hidden"
+                aria-label={copy.itemPhoto}
+                accept="image/png,image/jpeg,image/webp"
+                ref={fileInput}
+                onChange={(event) =>
+                  chooseFile(event.target.files?.[0] ?? null)
+                }
+              />
+              <div
+                className="relative flex min-h-52 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-input bg-muted/20 p-5 text-center"
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => {
+                  event.preventDefault()
+                  if (!disabled && event.dataTransfer.files.length)
+                    chooseFile(event.dataTransfer.files[0] ?? null)
+                }}
+              >
+                {photoUrl ? (
+                  <div className="relative h-40 w-full">
+                    <Image
+                      src={photoUrl}
+                      alt={file?.name ?? item?.name ?? copy.itemPhoto}
+                      fill
+                      unoptimized
+                      className="rounded-md object-contain"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex size-12 items-center justify-center rounded-full border bg-background text-muted-foreground">
+                    <HugeiconsIcon
+                      icon={ImageUpload01Icon}
+                      size={22}
+                      aria-hidden="true"
+                    />
+                  </div>
+                )}
+                {(file || (!removePhoto && item?.photoId)) && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="icon-sm"
+                    className="absolute top-3 right-3 z-10 rounded-full"
+                    aria-label={copy.removePhoto}
+                    onClick={() => {
+                      setSelectedPhoto(null)
+                      setRemovePhoto(true)
+                      if (fileInput.current) fileInput.current.value = ""
+                    }}
+                  >
+                    <HugeiconsIcon
+                      icon={Cancel01Icon}
+                      size={16}
+                      aria-hidden="true"
+                    />
+                  </Button>
+                )}
+                <p
+                  id="photo-current"
+                  className="max-w-full text-sm [overflow-wrap:anywhere] text-muted-foreground"
+                >
+                  {file?.name ??
+                    (!removePhoto && item?.photoId
+                      ? copy.currentPhoto
+                      : copy.noPhotoChosen)}
+                </p>
+                <FieldDescription id="photo-note" className="text-center">
+                  {copy.photoNote}
+                </FieldDescription>
                 <Button
+                  id="choose-photo"
                   type="button"
-                  variant="secondary"
-                  size="icon-sm"
-                  className="absolute top-3 right-3 z-10 rounded-full"
-                  aria-label={copy.removePhoto}
-                  onClick={() => {
-                    setSelectedPhoto(null)
-                    setRemovePhoto(true)
-                    if (fileInput.current) fileInput.current.value = ""
-                  }}
+                  variant="outline"
+                  aria-describedby="photo-label photo-note photo-current"
+                  onClick={() => fileInput.current?.click()}
                 >
                   <HugeiconsIcon
-                    icon={Cancel01Icon}
+                    icon={Upload04Icon}
                     size={16}
                     aria-hidden="true"
                   />
+                  {copy.choosePhoto}
                 </Button>
+              </div>
+              {file && (
+                <FieldDescription role="status">
+                  {copy.photoSelected}
+                </FieldDescription>
               )}
-              <p
-                id="photo-current"
-                className="max-w-full text-sm [overflow-wrap:anywhere] text-muted-foreground"
-              >
-                {file?.name ??
-                  (!removePhoto && item?.photoId
-                    ? copy.currentPhoto
-                    : copy.noPhotoChosen)}
-              </p>
-              <FieldDescription id="photo-note" className="text-center">
-                {copy.photoNote}
+            </Field>
+            <Field data-invalid={!!errors.description}>
+              <FieldLabel htmlFor="item-description">
+                {copy.itemDescription}
+              </FieldLabel>
+              <Textarea
+                id="item-description"
+                className="min-h-20"
+                {...register("description")}
+                aria-invalid={!!errors.description}
+                aria-describedby={`description-note${errors.description ? " description-error" : ""}`}
+              />
+              <FieldDescription id="description-note">
+                {copy.optionalDescription}
               </FieldDescription>
-              <Button
-                id="choose-photo"
-                type="button"
-                variant="outline"
-                aria-describedby="photo-label photo-note photo-current"
-                onClick={() => fileInput.current?.click()}
-              >
-                <HugeiconsIcon
-                  icon={Upload04Icon}
-                  size={16}
-                  aria-hidden="true"
-                />
-                {copy.choosePhoto}
-              </Button>
-            </div>
-            {file && (
-              <FieldDescription role="status">
-                {copy.photoSelected}
-              </FieldDescription>
-            )}
-          </Field>
-          <Field data-invalid={!!errors.description}>
-            <FieldLabel htmlFor="item-description">
-              {copy.itemDescription}
-            </FieldLabel>
-            <Textarea
-              id="item-description"
-              className="min-h-20"
-              {...register("description")}
-              aria-invalid={!!errors.description}
-              aria-describedby={`description-note${errors.description ? " description-error" : ""}`}
+              {errors.description && (
+                <FieldError id="description-error">
+                  {formError(errors.description.message, copy)}
+                </FieldError>
+              )}
+            </Field>
+            <Controller
+              name="available"
+              control={control}
+              render={({ field }) => (
+                <Field orientation="horizontal">
+                  <FieldLabel htmlFor="item-available">
+                    {copy.availableItem}
+                  </FieldLabel>
+                  <Switch
+                    id="item-available"
+                    name={field.name}
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    onBlur={field.onBlur}
+                    ref={field.ref}
+                    disabled={disabled}
+                  />
+                </Field>
+              )}
             />
-            <FieldDescription id="description-note">
-              {copy.optionalDescription}
-            </FieldDescription>
-            {errors.description && (
-              <FieldError id="description-error">
-                {formError(errors.description.message, copy)}
-              </FieldError>
-            )}
-          </Field>
-          <Controller
-            name="available"
-            control={control}
-            render={({ field }) => (
-              <Field orientation="horizontal">
-                <FieldLabel htmlFor="item-available">
-                  {copy.availableItem}
-                </FieldLabel>
-                <Switch
-                  id="item-available"
-                  name={field.name}
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                  onBlur={field.onBlur}
-                  ref={field.ref}
-                  disabled={disabled}
-                />
-              </Field>
-            )}
-          />
-          <div className="flex justify-end border-t pt-4">
-            <SubmitButton
-              className="w-full sm:w-auto"
-              pending={isSubmitting}
-              pendingLabel={copy.working}
+            {failure && <Feedback tone="error">{copy[failure]}</Feedback>}
+            {saved && !embedded && <Feedback>{copy.itemSaved}</Feedback>}
+          </FieldSet>
+        </div>
+        <DialogFooter
+          className={cn(
+            "flex-row flex-wrap justify-end gap-2 border-t pt-4",
+            embedded && "shrink-0 bg-popover px-6 py-4"
+          )}
+        >
+          {(embedded || item) && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isSubmitting}
+              onClick={onCancel}
             >
-              {item ? copy.saveItem : copy.addItem}
-            </SubmitButton>
-          </div>
-        </FieldSet>
-        {failure && (
-          <Feedback tone="error" className="mt-4">
-            {copy[failure]}
-          </Feedback>
-        )}
-        {saved && !embedded && (
-          <Feedback className="mt-4">{copy.itemSaved}</Feedback>
-        )}
+              {copy.cancel}
+            </Button>
+          )}
+          <SubmitButton
+            className="h-9 w-auto rounded-md"
+            disabled={disabled}
+            pending={isSubmitting}
+            pendingLabel={copy.working}
+          >
+            {item ? copy.saveItem : copy.addItem}
+          </SubmitButton>
+        </DialogFooter>
       </form>
-      {item && (
-        <Button variant="outline" disabled={isSubmitting} onClick={onCancel}>
-          {copy.cancelEditing}
-        </Button>
-      )}
     </>
   )
   return embedded ? (

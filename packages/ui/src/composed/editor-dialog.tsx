@@ -1,5 +1,6 @@
 "use client"
 import type { ReactNode } from "react"
+import { cn } from "cn"
 import {
   Dialog,
   DialogContent,
@@ -17,6 +18,7 @@ export function EditorDialog({
   closeLabel,
   pending = false,
   children,
+  formLayout = false,
 }: {
   open: boolean
   onClose: () => void
@@ -25,6 +27,7 @@ export function EditorDialog({
   closeLabel: string
   pending?: boolean
   children: ReactNode
+  formLayout?: boolean
 }) {
   return (
     <Dialog
@@ -36,16 +39,27 @@ export function EditorDialog({
       <DialogContent
         aria-label={title}
         showCloseButton={false}
-        className="max-h-[90dvh] overflow-y-auto sm:max-w-xl"
+        className={cn(
+          "max-h-[90dvh] overflow-y-auto sm:max-w-xl",
+          formLayout && "flex flex-col gap-0 overflow-hidden p-0"
+        )}
       >
-        <DialogHeader>
+        <DialogHeader
+          className={formLayout ? "shrink-0 border-b px-6 py-5" : undefined}
+        >
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
-        {children}
-        <Button variant="outline" disabled={pending} onClick={onClose}>
-          {closeLabel}
-        </Button>
+        {formLayout ? (
+          <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+        ) : (
+          children
+        )}
+        {!formLayout && (
+          <Button variant="outline" disabled={pending} onClick={onClose}>
+            {closeLabel}
+          </Button>
+        )}
       </DialogContent>
     </Dialog>
   )

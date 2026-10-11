@@ -205,9 +205,7 @@ test("invited staff can take and hand over cash orders without owner menu contro
   await expect(page.getByRole("dialog")).not.toBeVisible()
   await page.getByRole("button", { name: "Edit item", exact: true }).click()
   await page.getByLabel("Price (MMK)", { exact: true }).fill("9000")
-  await page
-    .getByRole("button", { name: "Cancel editing", exact: true })
-    .click()
+  await page.getByRole("button", { name: "Cancel", exact: true }).click()
   await expect(page.getByText("Menu item saved.", { exact: true })).toHaveCount(
     0
   )
