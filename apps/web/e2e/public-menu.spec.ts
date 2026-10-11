@@ -117,7 +117,10 @@ test("owner downloads one scannable menu QR and logged-out guests see live chang
       guest.getByRole("heading", { name: "မီနူး", exact: true })
     ).toBeVisible()
 
-    await page.getByRole("button", { name: "Edit item", exact: true }).click()
+    await page
+      .getByRole("button", { name: "Item actions: လက်ဖက်ရည် Tea", exact: true })
+      .click()
+    await page.getByRole("menuitem", { name: "Edit item", exact: true }).click()
     await page.getByLabel("Price (MMK)", { exact: true }).fill("3000")
     await page.getByRole("switch", { name: "Available", exact: true }).click()
     await page.getByRole("button", { name: "Save item", exact: true }).click()
@@ -139,7 +142,10 @@ test("owner downloads one scannable menu QR and logged-out guests see live chang
     await guest.getByRole("button", { name: "English", exact: true }).click()
     await expect(guest.getByText("Unavailable", { exact: true })).toBeVisible()
     await page
-      .getByRole("button", { name: "Remove from sale", exact: true })
+      .getByRole("button", { name: "Item actions: လက်ဖက်ရည် Tea", exact: true })
+      .click()
+    await page
+      .getByRole("menuitem", { name: "Remove from sale", exact: true })
       .click()
     await page
       .getByRole("alertdialog")

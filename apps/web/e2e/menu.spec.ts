@@ -46,7 +46,10 @@ test("owner creates, edits and removes a persistent menu with verbatim Burmese c
   await expect(
     preview.getByText("နို့ပါသည် · With milk", { exact: true })
   ).toBeVisible()
-  await page.getByRole("button", { name: "Edit item", exact: true }).click()
+  await page
+    .getByRole("button", { name: "Item actions: လက်ဖက်ရည် Tea", exact: true })
+    .click()
+  await page.getByRole("menuitem", { name: "Edit item", exact: true }).click()
   await page.getByLabel("Price (MMK)", { exact: true }).fill("3000")
   await page.getByRole("switch", { name: "Available", exact: true }).click()
   await context.setOffline(true)
@@ -68,7 +71,10 @@ test("owner creates, edits and removes a persistent menu with verbatim Burmese c
   ).toBeVisible()
   await page.getByRole("button", { name: "English", exact: true }).click()
   await page
-    .getByRole("button", { name: "Remove from sale", exact: true })
+    .getByRole("button", { name: "Item actions: လက်ဖက်ရည် Tea", exact: true })
+    .click()
+  await page
+    .getByRole("menuitem", { name: "Remove from sale", exact: true })
     .click()
   await page
     .getByRole("alertdialog")
@@ -276,7 +282,13 @@ test("photos persist and live menu updates reach another owner session on Burmes
       })
     ).toBeVisible()
     await page
-      .getByRole("button", { name: "ပစ္စည်းပြင်မည်", exact: true })
+      .getByRole("button", {
+        name: "ပစ္စည်းလုပ်ဆောင်ချက်များ: မုန့် Toast",
+        exact: true,
+      })
+      .click()
+    await page
+      .getByRole("menuitem", { name: "ပစ္စည်းပြင်မည်", exact: true })
       .click()
     await page.getByLabel("ဈေးနှုန်း (ကျပ်)", { exact: true }).fill("2000")
     await page

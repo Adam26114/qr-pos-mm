@@ -255,7 +255,10 @@ test("invited staff can take and hand over cash orders without owner menu contro
     .getByRole("button", { name: "Add item", exact: true })
     .click()
   await expect(page.getByRole("dialog")).not.toBeVisible()
-  await page.getByRole("button", { name: "Edit item", exact: true }).click()
+  await page
+    .getByRole("button", { name: "Item actions: Tea", exact: true })
+    .click()
+  await page.getByRole("menuitem", { name: "Edit item", exact: true }).click()
   await page.getByLabel("Price (MMK)", { exact: true }).fill("9000")
   await page.getByRole("button", { name: "Cancel", exact: true }).click()
   await expect(page.getByText("Menu item saved.", { exact: true })).toHaveCount(
@@ -298,7 +301,12 @@ test("invited staff can take and hand over cash orders without owner menu contro
       staff.getByRole("heading", { name: "Staff POS Cafe", exact: true })
     ).toBeVisible()
     await staff.goto("http://localhost:3000/workspace/menu")
-    for (const label of ["Categories", "Tables", "Add item", "Edit item"])
+    for (const label of [
+      "Categories",
+      "Tables",
+      "Add item",
+      "Item actions: Tea",
+    ])
       await expect(
         staff.getByRole("button", { name: label, exact: true })
       ).toHaveCount(0)

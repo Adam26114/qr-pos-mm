@@ -188,7 +188,10 @@ test("a changed menu requires another review and a lost acknowledgement recovers
       .getByRole("button", { name: "Review order", exact: true })
       .click()
     await expect(add).toBeDisabled()
-    await page.getByRole("button", { name: "Edit item", exact: true }).click()
+    await page
+      .getByRole("button", { name: "Item actions: လက်ဖက်ရည် Tea", exact: true })
+      .click()
+    await page.getByRole("menuitem", { name: "Edit item", exact: true }).click()
     await page.getByLabel("Price (MMK)", { exact: true }).fill("3000")
     await page
       .getByRole("dialog")

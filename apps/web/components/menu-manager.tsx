@@ -7,8 +7,6 @@ import { Badge } from "@workspace/ui/components/badge"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   Add01Icon,
-  Edit02Icon,
-  Delete02Icon,
   ShoppingCartAdd01Icon,
   Image01Icon,
 } from "@hugeicons/core-free-icons"
@@ -29,6 +27,7 @@ import { usePosCommand } from "@/lib/use-pos-command"
 import { useCopy } from "./language-switcher"
 import { MenuCategoryEditor } from "./menu-category-editor"
 import { MenuItemEditor } from "./menu-item-editor"
+import { MenuItemActions } from "./menu-item-actions"
 import { TableManager } from "./table-manager"
 import { useSubmissionAttempt } from "@/lib/submission-attempt"
 import { useWorkspace } from "./workspace"
@@ -253,43 +252,20 @@ function MenuCatalog({
                 }
                 tools={
                   owner ? (
-                    <>
-                      <Button
-                        variant="outline"
-                        aria-label={copy.editItem}
-                        title={copy.editItem}
-                        disabled={!connected}
-                        onClick={() => {
-                          setSaved(null)
-                          setEditingItem(item._id)
-                          setDialog("item")
-                        }}
-                      >
-                        <HugeiconsIcon icon={Edit02Icon} aria-hidden="true" />
-                        {copy.editAction}
-                      </Button>
-                      <ConfirmAction
-                        {...confirmation}
-                        label={copy.removeFromSale}
-                        triggerVariant="destructive"
-                        triggerContent={
-                          <>
-                            <HugeiconsIcon
-                              icon={Delete02Icon}
-                              aria-hidden="true"
-                            />
-                            {copy.deleteAction}
-                          </>
-                        }
-                        title={copy.removeItemTitle}
-                        description={`${item.name} — ${copy.removeItemIntro}`}
-                        onConfirm={() => {
-                          if (!action.ready())
-                            return Promise.reject(new Error("Disconnected"))
-                          return removeItem({ storeId, itemId: item._id })
-                        }}
-                      />
-                    </>
+                    <MenuItemActions
+                      name={item.name}
+                      disabled={!connected}
+                      onEdit={() => {
+                        setSaved(null)
+                        setEditingItem(item._id)
+                        setDialog("item")
+                      }}
+                      onRemove={() => {
+                        if (!action.ready())
+                          return Promise.reject(new Error("Disconnected"))
+                        return removeItem({ storeId, itemId: item._id })
+                      }}
+                    />
                   ) : undefined
                 }
               />

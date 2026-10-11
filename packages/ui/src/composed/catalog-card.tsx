@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { Card, CardContent, CardFooter } from "@workspace/ui/components/card"
+import { Card, CardContent } from "@workspace/ui/components/card"
 import { cn } from "cn"
 
 export function CatalogCard({
@@ -25,6 +25,9 @@ export function CatalogCard({
     <Card className="h-full gap-0 overflow-hidden py-0">
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
         {image}
+        {tools && (
+          <div className="absolute top-2 right-2 flex gap-1">{tools}</div>
+        )}
       </div>
       <CardContent
         className={cn("flex flex-1 flex-col gap-3 p-4", compact && "gap-2 p-3")}
@@ -50,11 +53,6 @@ export function CatalogCard({
         </div>
         {compact ? status : actions}
       </CardContent>
-      {tools && (
-        <CardFooter className="flex flex-wrap gap-2 border-t bg-muted/20 p-3 [&_button]:h-10 [&_button]:min-w-0 [&_button]:flex-1 [&_button]:basis-24">
-          {tools}
-        </CardFooter>
-      )}
     </Card>
   )
 }

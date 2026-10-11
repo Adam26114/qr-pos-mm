@@ -1,99 +1,24 @@
 "use client"
 
-import { useState, type ReactNode, type ComponentProps } from "react"
+import { useState } from "react"
 import { Button } from "@workspace/ui/components/button"
+import { AlertDialogTrigger } from "@workspace/ui/components/alert-dialog"
 import {
-  AlertDialog,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-} from "@workspace/ui/components/alert-dialog"
-import { SubmitButton } from "@workspace/ui/composed/submit-button"
-import { Feedback } from "@workspace/ui/composed/feedback"
+  ConfirmDialog,
+  type ConfirmationOptions,
+} from "@workspace/ui/composed/confirm-dialog"
 
-// Keep confirmation open until the command succeeds, including accessible error feedback.
-export function ConfirmAction({
-  label,
-  title,
-  description,
-  cancelLabel,
-  pendingLabel,
-  failureMessage,
-  disabled,
-  onConfirm,
-  triggerContent,
-  triggerVariant = "outline",
-}: {
-  label: string
-  title: string
-  description: string
-  cancelLabel: string
-  pendingLabel: string
-  failureMessage: string
-  disabled?: boolean
-  onConfirm: () => Promise<unknown>
-  triggerContent?: ReactNode
-  triggerVariant?: ComponentProps<typeof Button>["variant"]
-}) {
+export function ConfirmAction(props: ConfirmationOptions) {
   const [open, setOpen] = useState(false)
-  const [pending, setPending] = useState(false)
-  const [failed, setFailed] = useState(false)
-  async function confirm() {
-    if (pending || disabled) return
-    setPending(true)
-    setFailed(false)
-    try {
-      await onConfirm()
-      setOpen(false)
-    } catch {
-      setFailed(true)
-    } finally {
-      setPending(false)
-    }
-  }
   return (
-    <AlertDialog
-      open={open}
-      onOpenChange={(value) => {
-        if (!pending) {
-          setOpen(value)
-          setFailed(false)
-        }
-      }}
-    >
+    <ConfirmDialog {...props} open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger
-        render={<Button variant={triggerVariant} title={label} />}
-        aria-label={label}
-        disabled={disabled}
+        render={<Button variant="outline" title={props.label} />}
+        aria-label={props.label}
+        disabled={props.disabled}
       >
-        {triggerContent ?? label}
+        {props.label}
       </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
-        </AlertDialogHeader>
-        {failed && <Feedback tone="error">{failureMessage}</Feedback>}
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={pending}>
-            {cancelLabel}
-          </AlertDialogCancel>
-          <SubmitButton
-            type="button"
-            variant="destructive"
-            pending={pending}
-            pendingLabel={pendingLabel}
-            disabled={disabled}
-            onClick={confirm}
-          >
-            {label}
-          </SubmitButton>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    </ConfirmDialog>
   )
 }
