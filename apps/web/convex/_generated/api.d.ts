@@ -10,7 +10,9 @@
 
 import type * as auth from "../auth.js";
 import type * as email from "../email.js";
+import type * as guestOrders from "../guestOrders.js";
 import type * as http from "../http.js";
+import type * as lib_order_lines from "../lib/order_lines.js";
 import type * as lib_order_values from "../lib/order_values.js";
 import type * as lib_store_access from "../lib/store_access.js";
 import type * as menu from "../menu.js";
@@ -30,7 +32,9 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   email: typeof email;
+  guestOrders: typeof guestOrders;
   http: typeof http;
+  "lib/order_lines": typeof lib_order_lines;
   "lib/order_values": typeof lib_order_values;
   "lib/store_access": typeof lib_store_access;
   menu: typeof menu;

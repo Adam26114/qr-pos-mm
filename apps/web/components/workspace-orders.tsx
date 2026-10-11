@@ -17,9 +17,11 @@ import { Feedback } from "@workspace/ui/composed/feedback"
 import { useWorkspace } from "./workspace"
 import { useCopy } from "./language-switcher"
 import { usePosCopy } from "@/lib/pos-copy"
+import { useGuestCopy } from "@/lib/guest-copy"
+import { Badge } from "@workspace/ui/components/badge"
 import { useOrderSound } from "@/lib/use-order-sound"
 import { OrderActions } from "./order-actions"
-import { OrderSummary } from "./pos-cart"
+import { OrderSummary } from "./order-summary"
 
 type Order = FunctionReturnType<typeof api.orders.queue>[number]
 export function WorkspaceOrders() {
@@ -110,6 +112,7 @@ function OrderQueue({ storeId }: { storeId: Order["storeId"] }) {
 }
 function OrderCard({ order }: { order: Order }) {
   const pos = usePosCopy()
+  const guest = useGuestCopy()
   const { language } = useCopy()
   const [showHistory, setShowHistory] = useState(false)
   const detail = useQuery(
@@ -138,8 +141,11 @@ function OrderCard({ order }: { order: Order }) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {order.source === "qr" && (
+          <Badge variant="secondary">{guest.qrOrder}</Badge>
+        )}
         <OrderSummary order={order} payment={!!order.payment} />
-        <OrderActions order={order} />
+        {order.source === "counter" && <OrderActions order={order} />}
         <Button variant="ghost" onClick={() => setShowHistory(true)}>
           {pos.history}
         </Button>

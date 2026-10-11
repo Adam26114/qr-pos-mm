@@ -18,6 +18,7 @@ Use the existing shared patterns first:
 - `LoadingState`: Card, localized status text, and decorative Skeletons.
 - `CatalogCard`: photo, authored title/description, price, status, and caller-supplied actions in a responsive Card.
 - `CatalogFilters`: accessible search and horizontally scrolling category buttons; callers supply labels, options, and transient filter state.
+- `CartItems`: item amounts, availability, accessible quantity/remove controls, or fixed reviewed quantities; callers provide entries, labels and handlers. Used by counter POS and the guest cart.
 - `EditorDialog`: controlled Dialog with a localized title, description and Close action, keeping pending commands open.
 
 ## Composition rules

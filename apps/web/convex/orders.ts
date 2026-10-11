@@ -12,6 +12,7 @@ import {
   requireStoreMembership,
 } from "./lib/store_access"
 import { destinationInput } from "./lib/order_values"
+import { orderLineInput, snapshotOrderLines } from "./lib/order_lines"
 
 const command = { storeId: v.id("stores"), orderId: v.id("orders") }
 async function accessOrder(
@@ -52,13 +53,7 @@ export const createCounter = mutation({
   args: {
     storeId: v.id("stores"),
     submissionKey: v.string(),
-    lines: v.array(
-      v.object({
-        itemId: v.id("menuItems"),
-        quantity: v.number(),
-        expectedPrice: v.number(),
-      })
-    ),
+    lines: v.array(orderLineInput),
     note: v.string(),
   },
   handler: async (ctx, args) => {
@@ -82,49 +77,14 @@ export const createCounter = mutation({
       return accepted._id
     }
     assertAcceptingOrders(store)
-    if (
-      !args.lines.length ||
-      args.lines.length > 100 ||
-      args.note.length > 2000 ||
-      args.submissionKey.length < 8 ||
-      args.submissionKey.length > 100
-    )
+    if (args.submissionKey.length < 8 || args.submissionKey.length > 100)
       throw new ConvexError("INVALID_ORDER")
-    const ids = new Set<string>()
-    const lines = []
-    let total = 0
-    for (const line of args.lines) {
-      if (
-        ids.has(line.itemId) ||
-        !Number.isSafeInteger(line.quantity) ||
-        line.quantity < 1 ||
-        line.quantity > 99
-      )
-        throw new ConvexError("INVALID_ORDER")
-      ids.add(line.itemId)
-      const item = await ctx.db.get(line.itemId)
-      if (!item || item.storeId !== args.storeId)
-        throw new ConvexError("STORE_ACCESS_DENIED")
-      const category = await ctx.db.get(item.categoryId)
-      if (
-        item.removedAt !== undefined ||
-        !item.available ||
-        !category ||
-        category.removedAt !== undefined
-      )
-        throw new ConvexError("ITEM_UNAVAILABLE")
-      if (item.price !== line.expectedPrice)
-        throw new ConvexError("PRICE_CHANGED")
-      total += item.price * line.quantity
-      if (!Number.isSafeInteger(total) || total < 1)
-        throw new ConvexError("INVALID_ORDER")
-      lines.push({
-        itemId: item._id,
-        name: item.name,
-        unitPrice: item.price,
-        quantity: line.quantity,
-      })
-    }
+    const { lines, total } = await snapshotOrderLines(
+      ctx,
+      args.storeId,
+      args.lines,
+      args.note
+    )
     return await ctx.db.insert("orders", {
       storeId: args.storeId,
       createdBy: user._id,

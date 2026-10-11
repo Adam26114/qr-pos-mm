@@ -3,6 +3,11 @@ import { v } from "convex/values"
 import { destination } from "./lib/order_values"
 
 export default defineSchema({
+  guestReceipts: defineTable({
+    tokenHash: v.string(),
+    storeId: v.id("stores"),
+    orderId: v.id("orders"),
+  }).index("by_token_hash", ["tokenHash"]),
   tables: defineTable({
     storeId: v.id("stores"),
     number: v.number(),
@@ -14,7 +19,7 @@ export default defineSchema({
     submissionKey: v.string(),
     payload: v.string(),
     createdAt: v.number(),
-    source: v.literal("counter"),
+    source: v.union(v.literal("counter"), v.literal("qr")),
     lines: v.array(
       v.object({
         itemId: v.id("menuItems"),

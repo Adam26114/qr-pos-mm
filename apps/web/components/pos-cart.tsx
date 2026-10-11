@@ -13,6 +13,7 @@ import { Button } from "@workspace/ui/components/button"
 import { Badge } from "@workspace/ui/components/badge"
 import { Field, FieldLabel } from "@workspace/ui/components/field"
 import { Textarea } from "@workspace/ui/components/textarea"
+import { CartItems } from "@workspace/ui/composed/cart-items"
 import { Feedback } from "@workspace/ui/composed/feedback"
 import { SubmitButton } from "@workspace/ui/composed/submit-button"
 import { api } from "@/convex/_generated/api"
@@ -22,6 +23,7 @@ import { usePosCopy } from "@/lib/pos-copy"
 import { usePosCommand } from "@/lib/use-pos-command"
 import type { useSubmissionAttempt } from "@/lib/submission-attempt"
 import { useCopy } from "./language-switcher"
+import { OrderSummary } from "./order-summary"
 import { OrderActions } from "./order-actions"
 
 export type CartLine = { itemId: Id<"menuItems">; quantity: number }
@@ -173,62 +175,32 @@ export function PosCart({
               {!lines.length && (
                 <p className="text-sm text-muted-foreground">{pos.emptyCart}</p>
               )}
-              <ul className="space-y-4">
-                {lines.map((line) => {
+              <CartItems
+                labels={{
+                  increase: pos.increase,
+                  decrease: pos.decrease,
+                  remove: pos.remove,
+                  unavailable: copy.unavailableItem,
+                }}
+                entries={lines.map((line) => {
                   const item = items.find((item) => item._id === line.itemId)
-                  const name = item?.name ?? pos.missingItem
-                  return (
-                    <li key={line.itemId} className="space-y-2 border-b pb-4">
-                      <div className="flex justify-between gap-2 text-sm">
-                        <span className="[overflow-wrap:anywhere]">{name}</span>
-                        <span className="shrink-0 tabular-nums">
-                          {item ? formatMMK(item.price * line.quantity) : "—"}
-                        </span>
-                      </div>
-                      {(!item || !item.available) && (
-                        <Badge variant="outline">{copy.unavailableItem}</Badge>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="icon-sm"
-                          variant="outline"
-                          aria-label={`${pos.decrease}: ${name}`}
-                          onClick={() => quantity(line.itemId, -1)}
-                        >
-                          −
-                        </Button>
-                        <span className="min-w-6 text-center tabular-nums">
-                          {line.quantity}
-                        </span>
-                        <Button
-                          size="icon-sm"
-                          variant="outline"
-                          disabled={line.quantity >= 99 || !item?.available}
-                          aria-label={`${pos.increase}: ${name}`}
-                          onClick={() => quantity(line.itemId, 1)}
-                        >
-                          +
-                        </Button>
-                        <Button
-                          className="ml-auto"
-                          size="sm"
-                          variant="ghost"
-                          aria-label={`${pos.remove}: ${name}`}
-                          onClick={() =>
-                            setLines((current) =>
-                              current.filter(
-                                (other) => other.itemId !== line.itemId
-                              )
-                            )
-                          }
-                        >
-                          {pos.remove}
-                        </Button>
-                      </div>
-                    </li>
-                  )
+                  return {
+                    id: line.itemId,
+                    name: item?.name ?? pos.missingItem,
+                    quantity: line.quantity,
+                    amount: item ? formatMMK(item.price * line.quantity) : "—",
+                    available: !!item?.available,
+                  }
                 })}
-              </ul>
+                onQuantity={(id, delta) =>
+                  quantity(id as Id<"menuItems">, delta)
+                }
+                onRemove={(id) =>
+                  setLines((current) =>
+                    current.filter((line) => line.itemId !== id)
+                  )
+                }
+              />
               <Field>
                 <FieldLabel htmlFor="cart-note">{pos.note}</FieldLabel>
                 <Textarea
@@ -265,63 +237,5 @@ export function PosCart({
         </CardContent>
       </Card>
     </section>
-  )
-}
-export function OrderSummary({
-  order,
-  payment,
-}: {
-  order: {
-    lines: {
-      itemId: string
-      name: string
-      quantity: number
-      unitPrice: number
-    }[]
-    total: number
-    note: string
-    status: "pending" | "cooking" | "served"
-    destination: { kind: "takeaway" } | { kind: "table"; number: number } | null
-  }
-  payment: boolean
-}) {
-  const pos = usePosCopy()
-  return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap gap-2">
-        <Badge variant="outline">{pos[order.status]}</Badge>
-        <Badge variant={payment ? "secondary" : "outline"}>
-          {payment ? pos.cashReceived : pos.unpaid}
-        </Badge>
-        <Badge variant="outline">
-          {!order.destination
-            ? pos.unassigned
-            : order.destination.kind === "takeaway"
-              ? pos.takeaway
-              : `${pos.table} ${order.destination.number}`}
-        </Badge>
-      </div>
-      <ul className="space-y-2 text-sm">
-        {order.lines.map((line) => (
-          <li key={line.itemId} className="flex justify-between gap-3">
-            <span className="[overflow-wrap:anywhere]">
-              {line.quantity} × {line.name}
-            </span>
-            <span className="shrink-0 tabular-nums">
-              {formatMMK(line.unitPrice * line.quantity)}
-            </span>
-          </li>
-        ))}
-      </ul>
-      {order.note && (
-        <p className="text-sm [overflow-wrap:anywhere] whitespace-pre-wrap text-muted-foreground">
-          {order.note}
-        </p>
-      )}
-      <div className="flex justify-between gap-3 border-t pt-3 font-medium">
-        <span>{pos.total}</span>
-        <span className="tabular-nums">{formatMMK(order.total)}</span>
-      </div>
-    </div>
   )
 }

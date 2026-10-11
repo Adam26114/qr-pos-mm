@@ -51,7 +51,7 @@ const en = {
   markServed: "Mark served",
   handover: "Mark handed over",
   liveOrders: "Live orders",
-  liveIntro: "Recover unpaid orders, assign paid bills, then cook and serve.",
+  liveIntro: "See incoming orders and their current status.",
   noOpenOrders: "No open orders.",
   noHistory: "No served orders yet.",
   history: "Order history",
@@ -134,8 +134,7 @@ const my: Record<keyof typeof en, string> = {
   markServed: "ပေးပို့ပြီး မှတ်မည်",
   handover: "လွှဲပေးပြီး မှတ်မည်",
   liveOrders: "လက်ရှိအော်ဒါများ",
-  liveIntro:
-    "ငွေမရှင်းရသေးသော အော်ဒါများ ပြန်ဖွင့်ပြီး ငွေလက်ခံကာ နေရာသတ်မှတ်၊ ချက်ပြုတ်၊ ပေးပို့ပါ။",
+  liveIntro: "ဝင်လာသော အော်ဒါများနှင့် လက်ရှိအခြေအနေကို ကြည့်ပါ။",
   noOpenOrders: "ဆောင်ရွက်ရန် အော်ဒါမရှိပါ။",
   noHistory: "ပေးပို့ပြီးသော အော်ဒါမရှိသေးပါ။",
   history: "အော်ဒါမှတ်တမ်း",
