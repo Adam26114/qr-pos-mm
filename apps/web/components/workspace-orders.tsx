@@ -1,5 +1,5 @@
 "use client"
-import { useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { useMutation, usePaginatedQuery, useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import type { FunctionReturnType } from "convex/server"
@@ -14,12 +14,14 @@ import {
 import { LoadingState } from "@workspace/ui/composed/loading-state"
 import { EditorDialog } from "@workspace/ui/composed/editor-dialog"
 import { Feedback } from "@workspace/ui/composed/feedback"
+import { SubmitButton } from "@workspace/ui/composed/submit-button"
 import { useWorkspace } from "./workspace"
 import { useCopy } from "./language-switcher"
 import { usePosCopy } from "@/lib/pos-copy"
 import { useGuestCopy } from "@/lib/guest-copy"
 import { Badge } from "@workspace/ui/components/badge"
 import { useOrderSound } from "@/lib/use-order-sound"
+import { isReadyToCook } from "@/lib/order-readiness"
 import { OrderActions } from "./order-actions"
 import { OrderSummary } from "./order-summary"
 
@@ -27,7 +29,7 @@ type Order = FunctionReturnType<typeof api.orders.queue>[number]
 export function WorkspaceOrders() {
   const { workspace } = useWorkspace()
   if (!workspace.store) return null
-  return <OrderQueue storeId={workspace.store._id} />
+  return <OrderQueue key={workspace.store._id} storeId={workspace.store._id} />
 }
 function OrderQueue({ storeId }: { storeId: Order["storeId"] }) {
   const { copy } = useCopy()
@@ -43,15 +45,16 @@ function OrderQueue({ storeId }: { storeId: Order["storeId"] }) {
   const ids = useMemo(
     () =>
       queue
-        ?.filter(
-          (order) =>
-            order.status === "pending" && order.payment && order.destination
-        )
+        ?.filter((order) => isReadyToCook(order, !!order.payment))
         .map((order) => order._id),
     [queue]
   )
   const freshBaseline = useMutation(api.orders.soundBaseline)
-  const sound = useOrderSound(ids, connected, () => freshBaseline({ storeId }))
+  const baseline = useCallback(
+    () => freshBaseline({ storeId }),
+    [freshBaseline, storeId]
+  )
+  const sound = useOrderSound(ids, connected, baseline)
   const orders = view === "open" ? queue : history.results
   return (
     <section className="space-y-6">
@@ -60,16 +63,29 @@ function OrderQueue({ storeId }: { storeId: Order["storeId"] }) {
           <h1 className="font-heading text-3xl font-semibold">{pos.orders}</h1>
           <p className="mt-2 text-sm text-muted-foreground">{pos.liveIntro}</p>
         </div>
-        <Button
+        <SubmitButton
+          type="button"
+          pending={sound.pending}
+          pendingLabel={copy.working}
           variant="outline"
           aria-pressed={sound.enabled}
           disabled={!connected || !queue}
           onClick={sound.toggle}
         >
           {sound.enabled ? pos.soundOff : pos.soundOn}
-        </Button>
+        </SubmitButton>
       </div>
       {sound.failed && <Feedback tone="error">{pos.soundFailed}</Feedback>}
+      {sound.newIds.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3" role="status">
+          <p className="text-sm font-medium">
+            {pos.newOrders}: {sound.newIds.length}
+          </p>
+          <Button variant="outline" size="sm" onClick={sound.acknowledge}>
+            {pos.markSeen}
+          </Button>
+        </div>
+      )}
       <div className="flex gap-2">
         <Button
           variant={view === "open" ? "default" : "outline"}
@@ -93,7 +109,11 @@ function OrderQueue({ storeId }: { storeId: Order["storeId"] }) {
         ) : orders.length ? (
           <div className="grid items-start gap-4 md:grid-cols-2 2xl:grid-cols-3">
             {orders.map((order) => (
-              <OrderCard key={order._id} order={order} />
+              <OrderCard
+                key={order._id}
+                order={order}
+                fresh={sound.newIds.includes(order._id)}
+              />
             ))}
           </div>
         ) : (
@@ -110,7 +130,7 @@ function OrderQueue({ storeId }: { storeId: Order["storeId"] }) {
     </section>
   )
 }
-function OrderCard({ order }: { order: Order }) {
+function OrderCard({ order, fresh }: { order: Order; fresh: boolean }) {
   const pos = usePosCopy()
   const guest = useGuestCopy()
   const { language } = useCopy()
@@ -127,10 +147,10 @@ function OrderCard({ order }: { order: Order }) {
         : `${pos.table} ${value.number}`
   }
   return (
-    <Card>
+    <Card role="article" aria-labelledby={`heading-${order._id}`}>
       <CardHeader>
         <CardTitle>
-          <h2>
+          <h2 id={`heading-${order._id}`}>
             {pos.order} · {order._id.slice(-6).toUpperCase()}
           </h2>
         </CardTitle>
@@ -141,11 +161,15 @@ function OrderCard({ order }: { order: Order }) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {fresh && <Badge>{pos.newOrder}</Badge>}
+        {order.status === "served" && !order.payment && (
+          <Badge variant="outline">{pos.awaitingCash}</Badge>
+        )}
         {order.source === "qr" && (
           <Badge variant="secondary">{guest.qrOrder}</Badge>
         )}
         <OrderSummary order={order} payment={!!order.payment} />
-        {order.source === "counter" && <OrderActions order={order} />}
+        <OrderActions order={order} />
         <Button variant="ghost" onClick={() => setShowHistory(true)}>
           {pos.history}
         </Button>

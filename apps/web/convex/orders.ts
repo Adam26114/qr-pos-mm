@@ -13,6 +13,7 @@ import {
 } from "./lib/store_access"
 import { destinationInput } from "./lib/order_values"
 import { orderLineInput, snapshotOrderLines } from "./lib/order_lines"
+import { isReadyToCook } from "../lib/order-readiness"
 
 const command = { storeId: v.id("stores"), orderId: v.id("orders") }
 async function accessOrder(
@@ -121,25 +122,32 @@ export const queue = query({
   handler: async (ctx, { storeId }) => {
     await requireStoreMembership(ctx, storeId)
     const orders = (
-      await Promise.all(
-        (["pending", "cooking"] as const).map((status) =>
+      await Promise.all([
+        ...(["pending", "cooking"] as const).map((status) =>
           ctx.db
             .query("orders")
             .withIndex("by_store_status", (q) =>
               q.eq("storeId", storeId).eq("status", status)
             )
             .collect()
-        )
-      )
+        ),
+        ctx.db
+          .query("orders")
+          .withIndex("by_store_cash_collection", (q) =>
+            q.eq("storeId", storeId).eq("cashCollectionPending", true)
+          )
+          .collect(),
+      ])
     )
       .flat()
       .sort((a, b) => a.createdAt - b.createdAt)
-    return await Promise.all(
+    const queue = await Promise.all(
       orders.map(async (order) => ({
         ...order,
         payment: await paymentFor(ctx, order._id),
       }))
     )
+    return queue.filter((order) => order.status !== "served" || !order.payment)
   },
 })
 // A mutation response confirms a current server snapshot, unlike a cached subscription on reconnect.
@@ -155,7 +163,10 @@ export const soundBaseline = mutation({
       .collect()
     const ready = await Promise.all(
       pending.map(async (order) =>
-        order.destination && (await paymentFor(ctx, order._id))
+        isReadyToCook(
+          order,
+          order.source === "counter" && !!(await paymentFor(ctx, order._id))
+        )
           ? order._id
           : null
       )
@@ -211,6 +222,7 @@ export const recordCash = mutation({
       receivedAt: Date.now(),
       recordedBy: user._id,
     })
+    await ctx.db.patch(orderId, { cashCollectionPending: false })
     await event(ctx, storeId, orderId, user._id, user.name, "cash_received")
   },
 })
@@ -218,8 +230,10 @@ export const assignDestination = mutation({
   args: { ...command, destination: destinationInput },
   handler: async (ctx, { storeId, orderId, destination: input }) => {
     const { order, user } = await accessOrder(ctx, storeId, orderId)
-    if (!(await paymentFor(ctx, orderId)))
+    if (order.source === "counter" && !(await paymentFor(ctx, orderId)))
       throw new ConvexError("PAYMENT_REQUIRED")
+    if (order.source === "qr" && input.kind !== "table")
+      throw new ConvexError("TABLE_REQUIRED")
     let next
     if (input.kind === "table") {
       const table = await ctx.db.get(input.tableId)
@@ -232,7 +246,13 @@ export const assignDestination = mutation({
         number: table.number,
       }
     } else next = { kind: "takeaway" as const }
-    if (JSON.stringify(order.destination) === JSON.stringify(next)) return
+    if (
+      order.destination?.kind === next.kind &&
+      (next.kind === "takeaway" ||
+        (order.destination.kind === "table" &&
+          order.destination.tableId === next.tableId))
+    )
+      return
     await ctx.db.patch(orderId, { destination: next })
     await ctx.db.insert("orderEvents", {
       storeId,
@@ -251,7 +271,7 @@ export const startCooking = mutation({
   handler: async (ctx, { storeId, orderId }) => {
     const { order, user } = await accessOrder(ctx, storeId, orderId)
     if (order.status !== "pending") return
-    if (!(await paymentFor(ctx, orderId)))
+    if (order.source === "counter" && !(await paymentFor(ctx, orderId)))
       throw new ConvexError("PAYMENT_REQUIRED")
     if (!order.destination) throw new ConvexError("DESTINATION_REQUIRED")
     await ctx.db.patch(orderId, { status: "cooking", cookingAt: Date.now() })
@@ -264,7 +284,11 @@ export const markServed = mutation({
     const { order, user } = await accessOrder(ctx, storeId, orderId)
     if (order.status === "served") return
     if (order.status !== "cooking") throw new ConvexError("ORDER_NOT_COOKING")
-    await ctx.db.patch(orderId, { status: "served", servedAt: Date.now() })
+    await ctx.db.patch(orderId, {
+      status: "served",
+      servedAt: Date.now(),
+      cashCollectionPending: !(await paymentFor(ctx, orderId)),
+    })
     await event(ctx, storeId, orderId, user._id, user.name, "served")
   },
 })

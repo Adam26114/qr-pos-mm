@@ -38,9 +38,12 @@ export default defineSchema({
     destination: v.union(destination, v.null()),
     cookingAt: v.optional(v.number()),
     servedAt: v.optional(v.number()),
+    // Indexed queue membership for served bills awaiting cash; updated with service/payment atomically.
+    cashCollectionPending: v.optional(v.boolean()),
   })
     .index("by_submission", ["storeId", "createdBy", "submissionKey"])
-    .index("by_store_status", ["storeId", "status"]),
+    .index("by_store_status", ["storeId", "status"])
+    .index("by_store_cash_collection", ["storeId", "cashCollectionPending"]),
   cashPayments: defineTable({
     storeId: v.id("stores"),
     orderId: v.id("orders"),

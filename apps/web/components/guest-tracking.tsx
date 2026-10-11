@@ -73,7 +73,10 @@ function ReceiptCard({ receipt, token }: { receipt: Receipt; token: string }) {
     }
   }, [recovery, token])
   return (
-    <FormCard title={text.tracking} description={text.cashNote}>
+    <FormCard
+      title={text.tracking}
+      description={receipt.paid ? undefined : text.cashNote}
+    >
       <div className="space-y-5">
         <OrderSummary order={receipt.order} payment={receipt.paid} />
         <TextField

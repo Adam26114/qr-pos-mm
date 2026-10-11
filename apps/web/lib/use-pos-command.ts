@@ -24,6 +24,7 @@ export function usePosCommand() {
     tableExists: pos.tableExists,
     invalidTable: pos.invalidTable,
     tableRemoved: pos.tableRemoved,
+    tableRequired: pos.tableRequired,
     storageRequired: pos.storageRequired,
   }
   type FailureKey = keyof typeof failureMessages
@@ -46,6 +47,7 @@ export function usePosCommand() {
       TABLE_EXISTS: "tableExists",
       INVALID_TABLE: "invalidTable",
       TABLE_REMOVED: "tableRemoved",
+      TABLE_REQUIRED: "tableRequired",
     }
     return error instanceof ConvexError && typeof error.data === "string"
       ? (codes[error.data] ?? "requestFailed")

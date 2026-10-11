@@ -41,8 +41,11 @@ export function OrderActions({
   const [correcting, setCorrecting] = useState(false)
   const command = { storeId: order.storeId, orderId: order._id }
   const id = `destination-${order._id}`
+  const canAssign = order.source === "qr" || !!order.payment
   const options = [
-    { value: "takeaway", label: pos.takeaway },
+    ...(order.source === "counter"
+      ? [{ value: "takeaway", label: pos.takeaway }]
+      : []),
     ...(data?.tables ?? []).map((table) => ({
       value: table._id,
       label: `${pos.table} ${table.number}`,
@@ -65,7 +68,7 @@ export function OrderActions({
           }}
         />
       )}
-      {order.payment && (!order.destination || correcting) && (
+      {canAssign && (!order.destination || correcting) && (
         <>
           <Field>
             <FieldLabel htmlFor={id}>{pos.destination}</FieldLabel>
@@ -113,7 +116,7 @@ export function OrderActions({
           </SubmitButton>
         </>
       )}
-      {order.payment && order.destination && !correcting && (
+      {canAssign && order.destination && !correcting && (
         <Button
           variant="outline"
           disabled={!action.connected || action.pending}
@@ -130,7 +133,7 @@ export function OrderActions({
           type="button"
           pending={action.pending}
           pendingLabel={copy.working}
-          disabled={!order.payment || !order.destination || !action.connected}
+          disabled={!canAssign || !order.destination || !action.connected}
           onClick={() => action.run(() => cook(command))}
         >
           {pos.startCooking}
