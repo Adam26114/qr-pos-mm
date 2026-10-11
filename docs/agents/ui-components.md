@@ -2,6 +2,8 @@
 
 The owner's chosen approach is to build reusable product UI on top of shadcn/ui. Apply it when adding screens, controls, feedback, or layout patterns.
 
+Read [design.md](../../design.md) for visual conventions and accepted workspace layouts. This document describes component contracts and implementation boundaries.
+
 ## Where code belongs
 
 - `packages/ui/src/components`: shadcn primitives installed with the repository's existing `base-vega` / Base UI configuration. Import through `@workspace/ui/components/*`.
@@ -18,9 +20,9 @@ Use the existing shared patterns first:
 - `ConfirmAction`: button-triggered AlertDialog with an accessible title/description, cancel action, pending command, and failure feedback. Keeps the confirmation open if the command fails. Callers provide all copy and the authorized command.
 - `ConfirmDialog`: the same confirmation behavior with caller-controlled open state, for actions opened from a dropdown menu. Mount it outside the menu popup and supply the original trigger as its final focus target.
 - `LoadingState`: Card, localized status text, and decorative Skeletons.
-- `CatalogCard`: photo, authored title/description, price, status, and caller-supplied actions in a responsive Card. The compact POS variant keeps the cart action beside the price and accepts owner tools at the photo's top-right corner. The workspace supplies one opaque three-dot shadcn DropdownMenu trigger with Edit/Delete options.
+- `CatalogCard`: photo, authored title/description, price, status, and caller-supplied actions in a responsive Card. The compact POS variant keeps the cart action beside the price and accepts tools at the photo's top-right corner.
 - `CatalogFilters`: accessible search and horizontally scrolling category buttons for public menus; callers supply labels, options, and transient filter state. `CatalogSearch` and `CatalogCategories` can be composed separately.
-- `CatalogTabs`: compact, horizontally scrolling shadcn Tabs with keyboard navigation and an associated catalog panel. Callers supply authored category labels, transient selection, and catalog content. The workspace places its toolbar above both the catalog and cart, with five item columns from the desktop `xl` breakpoint; narrower screens use fewer columns.
+- `CatalogTabs`: compact, horizontally scrolling shadcn Tabs with keyboard navigation and an associated catalog panel. Callers supply authored category labels, transient selection, and catalog content.
 - `CartItems`: item amounts, availability, accessible quantity/remove controls, or fixed reviewed quantities; callers provide entries, labels and handlers. Used by counter POS and the guest cart. The compact POS variant accepts caller-rendered thumbnails and grouped quantity controls.
 - `DestinationTiles`: selectable options with pressed state for table/Takeaway dialogs. Callers own the available options, selection, and assignment command.
 - `EditorDialog`: controlled Dialog with a localized title, description and Close action, keeping pending commands open. Its form layout fixes the header and lets the child form own scrolling and one footer action row instead of appending another Close button.
