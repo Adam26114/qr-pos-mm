@@ -16,6 +16,9 @@ Use the existing shared patterns first:
 - `FormCard`: Card header, heading, description, content, and optional footer for account and onboarding forms.
 - `ConfirmAction`: AlertDialog with an accessible title/description, cancel action, pending command, and failure feedback. Keeps the confirmation open if the command fails. Callers provide all copy and the authorized command.
 - `LoadingState`: Card, localized status text, and decorative Skeletons.
+- `CatalogCard`: photo, authored title/description, price, status, and caller-supplied actions in a responsive Card.
+- `CatalogFilters`: accessible search and horizontally scrolling category buttons; callers supply labels, options, and transient filter state.
+- `EditorDialog`: controlled Dialog with a localized title, description and Close action, keeping pending commands open.
 
 ## Composition rules
 

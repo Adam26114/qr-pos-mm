@@ -4,8 +4,8 @@ import { useState } from "react"
 import { useMutation, useQuery } from "convex/react"
 import { Button } from "@workspace/ui/components/button"
 import { Badge } from "@workspace/ui/components/badge"
-import { Input } from "@workspace/ui/components/input"
 import { CatalogCard } from "@workspace/ui/composed/catalog-card"
+import { CatalogFilters } from "@workspace/ui/composed/catalog-filters"
 import { EditorDialog } from "@workspace/ui/composed/editor-dialog"
 import { Feedback } from "@workspace/ui/composed/feedback"
 import { LoadingState } from "@workspace/ui/composed/loading-state"
@@ -22,6 +22,8 @@ import { TableManager } from "./table-manager"
 import { useSubmissionAttempt } from "@/lib/submission-attempt"
 import { useWorkspace } from "./workspace"
 import { PosCart, type CartLine } from "./pos-cart"
+import { MenuQr } from "./menu-qr"
+import { usePublicMenuCopy } from "@/lib/public-menu-copy"
 
 export function MenuManager({
   storeId,
@@ -64,6 +66,7 @@ function MenuCatalog({
 }) {
   const { copy } = useCopy()
   const pos = usePosCopy()
+  const publicCopy = usePublicMenuCopy()
   const action = usePosCommand()
   const { workspace } = useWorkspace()
   const recovery = useSubmissionAttempt(
@@ -74,9 +77,9 @@ function MenuCatalog({
   const removeCategory = useMutation(api.menu.removeCategory)
   const [search, setSearch] = useState("")
   const [filter, setFilter] = useState<string>("all")
-  const [dialog, setDialog] = useState<"item" | "categories" | "tables" | null>(
-    null
-  )
+  const [dialog, setDialog] = useState<
+    "item" | "categories" | "tables" | "qr" | null
+  >(null)
   const [editingItem, setEditingItem] = useState<Id<"menuItems"> | null>(null)
   const [editingCategory, setEditingCategory] =
     useState<Id<"menuCategories"> | null>(null)
@@ -130,6 +133,13 @@ function MenuCatalog({
             <Button
               variant="outline"
               disabled={!connected}
+              onClick={() => setDialog("qr")}
+            >
+              {publicCopy.menuQr}
+            </Button>
+            <Button
+              variant="outline"
+              disabled={!connected}
               onClick={() => setDialog("categories")}
             >
               {copy.categories}
@@ -157,33 +167,19 @@ function MenuCatalog({
       {saved && <Feedback>{copy[saved]}</Feedback>}
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <section aria-label={copy.menuPreview} className="min-w-0 space-y-5">
-          <Input
-            aria-label={pos.search}
-            placeholder={pos.search}
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            type="search"
+          <CatalogFilters
+            searchLabel={pos.search}
+            categoryLabel={pos.filterCategory}
+            allLabel={pos.allItems}
+            search={search}
+            onSearchChange={setSearch}
+            categories={categories.map((category) => ({
+              id: category._id,
+              label: category.name,
+            }))}
+            selectedCategory={filter}
+            onCategoryChange={setFilter}
           />
-          <div
-            aria-label={pos.filterCategory}
-            className="flex gap-3 overflow-x-auto pb-2"
-          >
-            {[{ _id: "all", name: pos.allItems }, ...categories].map(
-              (category) => (
-                <Button
-                  key={category._id}
-                  variant={filter === category._id ? "default" : "outline"}
-                  aria-pressed={filter === category._id}
-                  onClick={() => setFilter(category._id)}
-                  className="h-auto min-h-16 min-w-28 shrink-0 px-5 py-3 text-sm whitespace-normal"
-                >
-                  <span className="max-w-44 [overflow-wrap:anywhere]">
-                    {category.name}
-                  </span>
-                </Button>
-              )
-            )}
-          </div>
           {!categories.length && (
             <Feedback>{owner ? copy.noCategories : copy.noMenuItems}</Feedback>
           )}
@@ -297,6 +293,17 @@ function MenuCatalog({
       )}
       {owner && (
         <>
+          <EditorDialog
+            open={dialog === "qr"}
+            title={publicCopy.menuQr}
+            description={publicCopy.qrIntro}
+            closeLabel={pos.close}
+            onClose={() => setDialog(null)}
+          >
+            {dialog === "qr" && (
+              <MenuQr key={storeId} storeId={storeId} connected={connected} />
+            )}
+          </EditorDialog>
           <EditorDialog
             open={dialog === "item"}
             title={editingItem ? copy.editItem : copy.addItem}

@@ -16,6 +16,7 @@ import type * as lib_store_access from "../lib/store_access.js";
 import type * as menu from "../menu.js";
 import type * as menu_photos from "../menu_photos.js";
 import type * as orders from "../orders.js";
+import type * as publicMenu from "../publicMenu.js";
 import type * as staff from "../staff.js";
 import type * as stores from "../stores.js";
 import type * as tables from "../tables.js";
@@ -35,6 +36,7 @@ declare const fullApi: ApiFromModules<{
   menu: typeof menu;
   menu_photos: typeof menu_photos;
   orders: typeof orders;
+  publicMenu: typeof publicMenu;
   staff: typeof staff;
   stores: typeof stores;
   tables: typeof tables;

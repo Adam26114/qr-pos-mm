@@ -34,6 +34,7 @@ export function EditorDialog({
       }}
     >
       <DialogContent
+        aria-label={title}
         showCloseButton={false}
         className="max-h-[90dvh] overflow-y-auto sm:max-w-xl"
       >
