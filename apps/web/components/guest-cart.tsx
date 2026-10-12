@@ -39,6 +39,8 @@ import { useOnline } from "@/lib/use-online"
 import { useCopy } from "./language-switcher"
 import type { CartLine } from "./pos-cart"
 import { OrderSummary } from "./order-summary"
+import { PaymentMethodField } from "./payment-method-field"
+import { usePaymentCopy } from "@/lib/payment-copy"
 import { CartItems } from "@workspace/ui/composed/cart-items"
 
 export type GuestMenu = NonNullable<
@@ -64,6 +66,8 @@ export function GuestCart({
   setReview: (review: GuestCommand["lines"] | null) => void
 }) {
   const pos = usePosCopy()
+  const paymentText = usePaymentCopy()
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "mmqr">("cash")
   const text = useGuestCopy()
   const { copy } = useCopy()
   const online = useOnline()
@@ -75,6 +79,7 @@ export function GuestCart({
   const [pending, setPending] = useState(false)
   const [failure, setFailure] = useState<string | null>(null)
   const failureMessages: Record<string, string> = {
+    SIMULATOR_DISABLED: paymentText.disabled,
     STORAGE_REQUIRED: text.storage,
     STORE_ACCESS_EXPIRED: pos.expired,
     PRICE_CHANGED: pos.priceChanged,
@@ -154,6 +159,7 @@ export function GuestCart({
       tableId: selected as Id<"tables">,
       note,
       lines: review!,
+      paymentMethod,
       token: Array.from(crypto.getRandomValues(new Uint8Array(32)), (byte) =>
         byte.toString(16).padStart(2, "0")
       ).join(""),
@@ -342,6 +348,12 @@ export function GuestCart({
                       </SelectContent>
                     </Select>
                   </Field>
+                  <PaymentMethodField
+                    id="guest-payment-method"
+                    value={paymentMethod}
+                    onChange={setPaymentMethod}
+                    disabled={pending}
+                  />
                   <SubmitButton
                     className="w-full"
                     type="button"
@@ -356,7 +368,9 @@ export function GuestCart({
                     }
                     onClick={submit}
                   >
-                    {text.submit}
+                    {paymentMethod === "mmqr"
+                      ? paymentText.submit
+                      : text.submit}
                   </SubmitButton>
                   <Button
                     className="w-full"
@@ -391,7 +405,11 @@ export function GuestCart({
                   {text.review}
                 </Button>
               )}
-              <p className="text-xs text-muted-foreground">{text.cashNote}</p>
+              <p className="text-xs text-muted-foreground">
+                {paymentMethod === "mmqr"
+                  ? paymentText.beforeCooking
+                  : text.cashNote}
+              </p>
             </>
           )}
           {recovery.broken && <Feedback tone="error">{text.storage}</Feedback>}

@@ -101,3 +101,11 @@ Small photo cards                     Items, quantities, note, total, checkout
 For UI changes, inspect the affected screen in Playwright with English and Burmese, light and dark themes, desktop sidebar states, and narrow phone widths such as 320px and 390px. Check text wrapping, control visibility, keyboard operation, filtering, and cart continuity where relevant. Save a screenshot showing the final result.
 
 Run the relevant existing checks for changed behavior. Follow [development and verification](docs/development.md) when running account/order journeys against the dedicated local test backend.
+
+## Local MMQR simulation
+
+- Only the isolated loopback backend may offer Cash and **MMQR — simulation**. Cash stays the default. Save the immutable bill before generating its test QR; the chosen method stays fixed through recovery and retries.
+- Use the shared payment checkout panel for private guest tracking, counter checkout, and controlled workspace dialogs. Label its QR **non-payable** and its money as simulated. Display server-owned expiry, pending/failure/uncertainty feedback, Check payment, same-attempt Recover checkout for interrupted creation, and terminal retry controls. Restore keyboard focus to the stable checkout panel when realtime confirmation removes its controls. An expired QR can still receive a late confirmed payment.
+- MMQR bills require confirmed funding before cooking. Counter bills also require funding before destination assignment. Cash QR preparation and post-meal collection keep their existing behavior. Sound alerts use the same funding readiness.
+- Owners see Review payments with an indexed count above the Orders board for retained excess collections or cancelled bills retaining money. The controlled review dialog opens existing bill history and full-refund recording, then restores focus to Review payments or the Orders heading if the balance disappears. Staff can view financial outcomes but do not see this review control.
+- Label simulated collections and refunds in authorized history and reporting. Guest tracking shows outcomes without provider references or internal audit information. Check/retry controls use the existing connectivity and duplicate-command guards; live records remain in Convex subscriptions.

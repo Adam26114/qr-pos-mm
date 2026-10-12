@@ -31,6 +31,7 @@ import { TextField } from "@workspace/ui/composed/text-field"
 import { SubmitButton } from "@workspace/ui/composed/submit-button"
 import { Feedback } from "@workspace/ui/composed/feedback"
 import { useCopy } from "./language-switcher"
+import { usePaymentCopy } from "@/lib/payment-copy"
 import { usePosCopy } from "@/lib/pos-copy"
 import { usePosCommand } from "@/lib/use-pos-command"
 import { formatMMK } from "@/lib/menu"
@@ -66,6 +67,7 @@ export function OrderFinancialDialog({
 }) {
   const { copy } = useCopy()
   const pos = usePosCopy()
+  const paymentText = usePaymentCopy()
   const action = usePosCommand()
   const cancel = useMutation(api.orders.cancel)
   const refund = useMutation(api.orders.recordRefund)
@@ -177,14 +179,18 @@ export function OrderFinancialDialog({
                 >
                   <SelectValue>
                     {selected
-                      ? `${selected.method === "cash" ? pos.cashReceived : "MMQR"} · ${formatMMK(selected.amount)}`
+                      ? `${selected.method === "cash" ? pos.cashReceived : selected.simulated ? paymentText.mmqr : "MMQR"} · ${formatMMK(selected.amount)}`
                       : pos.collection}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {eligible.map((collection) => (
                     <SelectItem key={collection._id} value={collection._id}>
-                      {collection.method === "cash" ? pos.cashReceived : "MMQR"}{" "}
+                      {collection.method === "cash"
+                        ? pos.cashReceived
+                        : collection.simulated
+                          ? paymentText.mmqr
+                          : "MMQR"}{" "}
                       · {formatMMK(collection.amount)} · {collection.reference}
                     </SelectItem>
                   ))}

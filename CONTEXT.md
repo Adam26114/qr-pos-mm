@@ -113,3 +113,15 @@ The owner's initial 14-day period of free access to the service, beginning when 
 **Subscription Payment**:
 Money an owner pays the platform for the service subscription, with MMQR as a supported payment method.
 _Avoid_: Order payment, store sales.
+
+**Submitted Payment Method**:
+The immutable choice of Cash or MMQR for one submitted bill. Missing legacy values mean Cash. Recovery reuses the original method; a retry cannot switch an MMQR bill to Cash.
+
+**Payment Attempt**:
+A durable checkout bound to one immutable order bill, order purpose, merchant, currency, amount and provider reference. An order has at most one unresolved attempt. Failed/expired attempts are reconciled before replacement and may still receive late success.
+
+**Local MMQR Simulation**:
+A non-payable checkout available only with explicit opt-in on the isolated loopback backend and frontend. Synthetic store merchants and signed developer-controlled provider events exercise confirmation and reconciliation; these records are labeled simulated and are not evidence of real MMQR integration.
+
+**Payment Review**:
+An owner workflow for retained money exceeding the bill or remaining on a cancelled order. Cancellation never returns money. Recording completed full refunds resolves the balance without reopening fulfillment. Staff retain ordinary order outcome visibility.

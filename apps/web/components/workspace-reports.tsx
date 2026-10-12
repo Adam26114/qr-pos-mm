@@ -8,6 +8,7 @@ import { api } from "@/convex/_generated/api"
 import { useReportCopy } from "@/lib/report-copy"
 import { useReportPeriod } from "@/lib/use-report-period"
 import { formatMMK } from "@/lib/menu"
+import { usePaymentCopy } from "@/lib/payment-copy"
 import { usePosCopy } from "@/lib/pos-copy"
 import { useCopy } from "./language-switcher"
 import { useWorkspace } from "./workspace"
@@ -303,6 +304,7 @@ function ReportTable({
 }) {
   const { copy, language } = useCopy()
   const pos = usePosCopy()
+  const paymentText = usePaymentCopy()
   const report = useReportCopy()
   const time = (at: number) =>
     new Date(at).toLocaleString(language === "my" ? "my-MM" : "en-GB", {
@@ -380,7 +382,9 @@ function ReportTable({
                       {financial
                         ? row.method === "cash"
                           ? pos.cashReceived
-                          : "MMQR"
+                          : row.simulated
+                            ? paymentText.mmqr
+                            : "MMQR"
                         : pos[order.status]}
                     </Badge>
                   </TableCell>

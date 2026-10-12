@@ -9,6 +9,7 @@ const schema = z.object({
   storeId: z.string(),
   submissionKey: z.string().min(8).max(100),
   note: z.string().max(2000),
+  paymentMethod: z.enum(["cash", "mmqr"]).optional(),
   lines: z
     .array(
       z.object({
@@ -20,6 +21,7 @@ const schema = z.object({
     .min(1)
     .max(100),
 })
+const versioned = z.object({ version: z.literal(2), command: schema })
 const eventName = "qr-pos-submission-changed"
 function subscribe(callback: () => void) {
   window.addEventListener("storage", callback)
@@ -44,7 +46,13 @@ export function useSubmissionAttempt(key: string, storeId: string) {
   const attempt = useMemo(() => {
     if (!raw) return null
     try {
-      const result = schema.safeParse(JSON.parse(raw))
+      const value = JSON.parse(raw)
+      const result =
+        value.version === undefined
+          ? schema
+              .refine((command) => command.paymentMethod !== "mmqr")
+              .safeParse(value)
+          : versioned.transform((value) => value.command).safeParse(value)
       return result.success && result.data.storeId === storeId
         ? (result.data as SubmissionAttempt)
         : null
@@ -53,9 +61,17 @@ export function useSubmissionAttempt(key: string, storeId: string) {
     }
   }, [raw, storeId])
   function save(value: SubmissionAttempt | null) {
-    if (value) localStorage.setItem(key, JSON.stringify(value))
+    if (value)
+      localStorage.setItem(
+        key,
+        JSON.stringify(
+          value.paymentMethod === "mmqr"
+            ? { version: 2, command: value }
+            : value
+        )
+      )
     else localStorage.removeItem(key)
     window.dispatchEvent(new Event(eventName))
   }
-  return { attempt, save }
+  return { attempt, save, broken: raw !== null && attempt === null }
 }

@@ -43,6 +43,7 @@ test("a seated guest gets a fixed separate bill and only a private capability ca
       _id: orderId,
       createdAt: expect.any(Number),
       source: "qr",
+      paymentMethod: "cash",
       status: "pending",
       destination: { kind: "table", number: 4 },
       lines: [{ itemId, name: "လက်ဖက်ရည် Tea", unitPrice: 2500, quantity: 2 }],

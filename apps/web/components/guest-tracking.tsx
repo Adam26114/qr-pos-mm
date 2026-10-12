@@ -14,6 +14,7 @@ import { useGuestCopy } from "@/lib/guest-copy"
 import { useGuestRecovery } from "@/lib/guest-recovery"
 import { useOnline } from "@/lib/use-online"
 import { LanguageSwitcher, useCopy } from "./language-switcher"
+import { PaymentCheckout } from "./payment-checkout"
 import { OrderSummary } from "./order-summary"
 
 type Receipt = NonNullable<FunctionReturnType<typeof api.guestOrders.track>>
@@ -77,7 +78,9 @@ function ReceiptCard({ receipt, token }: { receipt: Receipt; token: string }) {
       title={text.tracking}
       description={
         (receipt.money?.due ?? (receipt.paid ? 0 : receipt.order.total)) > 0
-          ? text.cashNote
+          ? receipt.order.paymentMethod === "cash"
+            ? text.cashNote
+            : undefined
           : undefined
       }
     >
@@ -88,6 +91,12 @@ function ReceiptCard({ receipt, token }: { receipt: Receipt; token: string }) {
           money={receipt.money}
           cashOnly={receipt.cashOnly}
         />
+        {receipt.order.paymentMethod === "mmqr" && (
+          <PaymentCheckout
+            access={{ token }}
+            cancelled={receipt.order.status === "cancelled"}
+          />
+        )}
         <TextField
           id="tracking-link"
           label={text.link}

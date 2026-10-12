@@ -1,6 +1,7 @@
 import { defineSchema, defineTable } from "convex/server"
 import { v } from "convex/values"
 import { destination } from "./lib/order_values"
+import { paymentStatus, providerEvent } from "./lib/payment_protocol"
 
 export default defineSchema({
   guestReceipts: defineTable({
@@ -20,6 +21,9 @@ export default defineSchema({
     payload: v.string(),
     createdAt: v.number(),
     source: v.union(v.literal("counter"), v.literal("qr")),
+    paymentMethod: v.optional(v.union(v.literal("cash"), v.literal("mmqr"))),
+    paymentAttemptId: v.optional(v.id("paymentAttempts")),
+    paymentReviewRequired: v.optional(v.boolean()),
     lines: v.array(
       v.object({
         itemId: v.id("menuItems"),
@@ -61,7 +65,50 @@ export default defineSchema({
     .index("by_cancel_request", ["storeId", "cancellation.requestKey"])
     .index("by_store_status_terminal", ["storeId", "status", "terminal"])
     .index("by_store_created", ["storeId", "createdAt"])
-    .index("by_store_outstanding", ["storeId", "outstanding", "createdAt"]),
+    .index("by_store_outstanding", ["storeId", "outstanding", "createdAt"])
+    .index("by_store_payment_review", [
+      "storeId",
+      "paymentReviewRequired",
+      "createdAt",
+    ]),
+  paymentAttempts: defineTable({
+    storeId: v.id("stores"),
+    orderId: v.id("orders"),
+    requestKey: v.string(),
+    purpose: v.literal("order"),
+    merchant: v.string(),
+    currency: v.literal("MMK"),
+    amount: v.number(),
+    reference: v.string(),
+    createdAt: v.number(),
+    expiresAt: v.number(),
+    status: paymentStatus,
+    terminalReconciled: v.boolean(),
+  })
+    .index("by_order", ["orderId"])
+    .index("by_request", ["orderId", "requestKey"])
+    .index("by_reference", ["reference"]),
+  simulatorCheckouts: defineTable({
+    attemptId: v.id("paymentAttempts"),
+    available: v.boolean(),
+    events: v.array(providerEvent),
+  }).index("by_attempt", ["attemptId"]),
+  paymentStartRequests: defineTable({
+    orderId: v.id("orders"),
+    requestKey: v.string(),
+    attemptId: v.id("paymentAttempts"),
+  }).index("by_request", ["orderId", "requestKey"]),
+  simulatorControls: defineTable({ creationAvailable: v.boolean() }),
+  paymentEvents: defineTable({
+    eventId: v.string(),
+    merchant: v.string(),
+    attemptId: v.id("paymentAttempts"),
+    at: v.number(),
+    payload: v.string(),
+    status: v.string(),
+  })
+    .index("by_identity", ["merchant", "eventId"])
+    .index("by_attempt", ["attemptId"]),
   cashPayments: defineTable({
     storeId: v.id("stores"),
     orderId: v.id("orders"),
@@ -88,10 +135,17 @@ export default defineSchema({
     recordedBy: v.string(),
     legacyCashPaymentId: v.optional(v.id("cashPayments")),
     reportingApplied: v.optional(v.boolean()),
+    simulated: v.optional(v.boolean()),
+    providerMerchant: v.optional(v.string()),
+    providerTransactionId: v.optional(v.string()),
   })
     .index("by_order", ["orderId"])
     .index("by_legacy_cash", ["legacyCashPaymentId"])
-    .index("by_store_collected", ["storeId", "collectedAt"]),
+    .index("by_store_collected", ["storeId", "collectedAt"])
+    .index("by_provider_transaction", [
+      "providerMerchant",
+      "providerTransactionId",
+    ]),
   orderRefunds: defineTable({
     storeId: v.id("stores"),
     orderId: v.id("orders"),
@@ -115,6 +169,7 @@ export default defineSchema({
     reportingApplied: v.optional(v.boolean()),
     requestKey: v.string(),
     payload: v.string(),
+    simulated: v.optional(v.boolean()),
   })
     .index("by_order", ["orderId"])
     .index("by_collection", ["collectionId"])
@@ -128,6 +183,7 @@ export default defineSchema({
     at: v.number(),
     kind: v.union(
       v.literal("cash_received"),
+      v.literal("mmqr_received"),
       v.literal("destination_changed"),
       v.literal("cooking"),
       v.literal("served"),
@@ -144,6 +200,8 @@ export default defineSchema({
     ready: v.boolean(),
     unpaidAmount: v.number(),
     unpaidCount: v.number(),
+    paymentReviewCount: v.optional(v.number()),
+    paymentReviewReady: v.optional(v.boolean()),
   }).index("by_store", ["storeId"]),
   reportDays: defineTable({
     storeId: v.id("stores"),

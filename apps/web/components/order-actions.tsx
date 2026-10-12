@@ -22,11 +22,14 @@ import { formatMMK } from "@/lib/menu"
 import { usePosCopy } from "@/lib/pos-copy"
 import { usePosCommand } from "@/lib/use-pos-command"
 import { useCopy } from "./language-switcher"
+import { PaymentCheckout } from "./payment-checkout"
+import { usePaymentCopy } from "@/lib/payment-copy"
 import styles from "./orders.module.css"
 
 export type WorkspaceOrder = FunctionReturnType<typeof api.orders.queue>[number]
 type Order = WorkspaceOrder
 type BoardActions = {
+  onPayment: (trigger: HTMLButtonElement) => void
   onCash: (trigger: HTMLButtonElement) => void
   onAssign: (trigger: HTMLButtonElement) => void
   onAdvanced: (trigger: HTMLButtonElement) => void
@@ -49,28 +52,35 @@ export function OrderActions({
 function BoardOrderActions({
   order,
   onCash,
+  onPayment,
   onAssign,
   onAdvanced,
 }: { order: Order } & BoardActions) {
   const pos = usePosCopy()
+  const paymentText = usePaymentCopy()
   const { copy } = useCopy()
   const action = usePosCommand()
   const cook = useMutation(api.orders.startCooking)
   const serve = useMutation(api.orders.markServed)
   const command = { storeId: order.storeId, orderId: order._id }
+  const needsPayment = order.paymentMethod === "mmqr" && !order.money.funded
   const needsCash =
-    !order.payment && (order.source === "counter" || order.status === "served")
+    order.paymentMethod !== "mmqr" &&
+    !order.payment &&
+    (order.source === "counter" || order.status === "served")
   const needsDestination =
-    !order.destination && (order.source === "qr" || !!order.payment)
-  const label = needsCash
-    ? pos.paymentReceived
-    : needsDestination
-      ? pos.assignDestination
-      : order.status === "pending"
-        ? pos.startCooking
-        : order.destination?.kind === "takeaway"
-          ? pos.handover
-          : pos.markServed
+    !order.destination && (order.source === "qr" || order.money.funded)
+  const label = needsPayment
+    ? paymentText.checkout
+    : needsCash
+      ? pos.paymentReceived
+      : needsDestination
+        ? pos.assignDestination
+        : order.status === "pending"
+          ? pos.startCooking
+          : order.destination?.kind === "takeaway"
+            ? pos.handover
+            : pos.markServed
   if (
     order.status === "cancelled" ||
     (order.status === "served" && order.payment)
@@ -86,7 +96,8 @@ function BoardOrderActions({
         className={`${styles.pressable} h-auto min-h-10 rounded-md px-3 py-2 whitespace-normal`}
         onClick={async (event) => {
           const trigger = event.currentTarget
-          if (needsCash) onCash(trigger)
+          if (needsPayment) onPayment(trigger)
+          else if (needsCash) onCash(trigger)
           else if (needsDestination) onAssign(trigger)
           else if (
             await action.run(() =>
@@ -98,16 +109,19 @@ function BoardOrderActions({
       >
         {label}
       </SubmitButton>
-      {!order.payment && order.source === "qr" && order.status !== "served" && (
-        <Button
-          variant="outline"
-          className={`${styles.pressable} h-auto min-h-9 w-full px-3 py-2 whitespace-normal`}
-          disabled={!action.connected || action.pending}
-          onClick={(event) => onCash(event.currentTarget)}
-        >
-          {pos.paymentReceived}
-        </Button>
-      )}
+      {order.paymentMethod !== "mmqr" &&
+        !order.payment &&
+        order.source === "qr" &&
+        order.status !== "served" && (
+          <Button
+            variant="outline"
+            className={`${styles.pressable} h-auto min-h-9 w-full px-3 py-2 whitespace-normal`}
+            disabled={!action.connected || action.pending}
+            onClick={(event) => onCash(event.currentTarget)}
+          >
+            {pos.paymentReceived}
+          </Button>
+        )}
       {action.failure && <Feedback tone="error">{action.failure}</Feedback>}
     </div>
   )
@@ -135,7 +149,10 @@ function DefaultOrderActions({
   if (order.status === "cancelled")
     return <Feedback>{pos.orderCancelled}</Feedback>
   const id = `destination-${order._id}`
-  const canAssign = order.source === "qr" || !!order.payment
+  const canAssign = order.source === "qr" || order.money.funded
+  const canCook =
+    (order.source === "qr" && order.paymentMethod !== "mmqr") ||
+    order.money.funded
   const options = [
     ...(order.source === "counter"
       ? [{ value: "takeaway", label: pos.takeaway }]
@@ -174,7 +191,8 @@ function DefaultOrderActions({
   )
   return (
     <div className="space-y-3">
-      {!order.payment && (
+      {order.paymentMethod === "mmqr" && <PaymentCheckout access={command} />}
+      {order.paymentMethod !== "mmqr" && !order.payment && (
         <ConfirmAction
           label={pos.paymentReceived}
           title={pos.cashTitle}
@@ -245,7 +263,7 @@ function DefaultOrderActions({
           type="button"
           pending={action.pending}
           pendingLabel={copy.working}
-          disabled={!canAssign || !order.destination || !action.connected}
+          disabled={!canCook || !order.destination || !action.connected}
           onClick={() => action.run(() => cook(command))}
         >
           {pos.startCooking}

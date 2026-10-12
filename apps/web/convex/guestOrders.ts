@@ -4,15 +4,9 @@ import { ConvexError, v } from "convex/values"
 import { mutation, query } from "./_generated/server"
 import { orderLineInput, snapshotOrderLines } from "./lib/order_lines"
 import { assertAcceptingOrders, storeEntitlement } from "./lib/store_access"
+import { hashToken } from "./lib/payment_access"
+import { requireSimulator } from "./lib/payment_config"
 
-async function hashToken(token: string) {
-  const bytes = new Uint8Array(
-    await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token))
-  )
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(
-    ""
-  )
-}
 const validToken = (token: string) => /^[a-f0-9]{64}$/.test(token)
 
 export const accepting = query({
@@ -30,6 +24,7 @@ export const submit = mutation({
     tableId: v.id("tables"),
     lines: v.array(orderLineInput),
     note: v.string(),
+    paymentMethod: v.optional(v.union(v.literal("cash"), v.literal("mmqr"))),
   },
   handler: async (ctx, args) => {
     if (!validToken(args.token)) throw new ConvexError("INVALID_ORDER")
@@ -46,13 +41,18 @@ export const submit = mutation({
       .unique()
     if (receipt) {
       const order = await ctx.db.get(receipt.orderId)
-      if (!order || order.payload !== payload)
+      if (
+        !order ||
+        order.payload !== payload ||
+        (order.paymentMethod ?? "cash") !== (args.paymentMethod ?? "cash")
+      )
         throw new ConvexError("SUBMISSION_KEY_REUSED")
       return order._id
     }
     const store = await ctx.db.get(args.storeId)
     if (!store) throw new ConvexError("STORE_ACCESS_DENIED")
     assertAcceptingOrders(store)
+    if (args.paymentMethod === "mmqr") requireSimulator()
     const table = await ctx.db.get(args.tableId)
     if (!table || table.storeId !== args.storeId)
       throw new ConvexError("INVALID_TABLE")
@@ -70,6 +70,7 @@ export const submit = mutation({
       payload,
       createdAt: Date.now(),
       source: "qr",
+      paymentMethod: args.paymentMethod ?? "cash",
       lines,
       note: args.note,
       total,
@@ -106,6 +107,7 @@ export const track = query({
         _id: order._id,
         createdAt: order.createdAt,
         source: order.source,
+        paymentMethod: order.paymentMethod ?? "cash",
         lines: order.lines,
         note: order.note,
         total: order.total,

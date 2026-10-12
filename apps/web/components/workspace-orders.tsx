@@ -30,6 +30,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@workspace/ui/components/select"
+import { PaymentReview } from "./payment-review"
 import { eligibleRefunds, financialSnapshot } from "@/lib/refund-eligibility"
 import { OrderPaymentBadges } from "./order-payment-badges"
 import { LoadingState } from "@workspace/ui/composed/loading-state"
@@ -64,7 +65,7 @@ export function WorkspaceOrders() {
 function OrderQueue({ storeId }: { storeId: Order["storeId"] }) {
   const { copy } = useCopy()
   const pos = usePosCopy()
-  const { connected } = useWorkspace()
+  const { connected, workspace } = useWorkspace()
   const [view, setView] = useState<"open" | "served">("open")
   const [historyStatus, setHistoryStatus] = useState<
     "all" | "served" | "cancelled"
@@ -102,7 +103,7 @@ function OrderQueue({ storeId }: { storeId: Order["storeId"] }) {
   const ids = useMemo(
     () =>
       queue
-        ?.filter((order) => isReadyToCook(order, !!order.payment))
+        ?.filter((order) => isReadyToCook(order, order.money.funded))
         .map((order) => order._id),
     [queue]
   )
@@ -174,7 +175,13 @@ function OrderQueue({ storeId }: { storeId: Order["storeId"] }) {
       onKeyDownCapture={() => setKeyboard(true)}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-heading text-2xl font-semibold">{pos.orders}</h1>
+        <h1
+          id="orders-heading"
+          tabIndex={-1}
+          className="font-heading text-2xl font-semibold"
+        >
+          {pos.orders}
+        </h1>
         <SubmitButton
           type="button"
           pending={sound.pending}
@@ -192,6 +199,7 @@ function OrderQueue({ storeId }: { storeId: Order["storeId"] }) {
           {sound.enabled ? pos.soundOff : pos.soundOn}
         </SubmitButton>
       </div>
+      {workspace.role === "owner" && <PaymentReview storeId={storeId} />}
       {sound.failed && <Feedback tone="error">{pos.soundFailed}</Feedback>}
       {sound.newIds.length > 0 && (
         <div
@@ -460,6 +468,10 @@ function WorkspaceOrderTicket({
           </Badge>
           {history && <Badge variant="outline">{pos[order.status]}</Badge>}
           <OrderPaymentBadges
+            simulated={order.collections.some(
+              (collection) =>
+                "simulated" in collection && collection.simulated === true
+            )}
             paid={!!order.payment}
             refunded={order.money.refunded}
             cashOnly={order.collections.every(
@@ -502,7 +514,7 @@ function WorkspaceOrderTicket({
           >
             {order.status !== "cancelled" &&
               order.destination &&
-              (order.source === "qr" || order.payment) && (
+              (order.source === "qr" || order.money.funded) && (
                 <DropdownMenuItem
                   disabled={!connected}
                   onClick={() => onDialog("destination", trigger.current)}
@@ -542,6 +554,7 @@ function WorkspaceOrderTicket({
           <OrderActions
             order={order}
             board={{
+              onPayment: (trigger) => onDialog("payment", trigger),
               onCash: (element) => onDialog("cash", element),
               onAssign: (element) => onDialog("destination", element),
               onAdvanced,

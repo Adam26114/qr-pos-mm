@@ -1,5 +1,7 @@
 "use client"
 
+import { PaymentCheckout } from "./payment-checkout"
+import { usePaymentCopy } from "@/lib/payment-copy"
 import { financialSnapshot } from "@/lib/refund-eligibility"
 import { OrderFinancialDialog } from "./order-financial-dialog"
 import { useState } from "react"
@@ -24,7 +26,7 @@ import type { WorkspaceOrder } from "./order-actions"
 import styles from "./orders.module.css"
 
 export type OrderDialogSession = {
-  kind: "cash" | "destination" | "history" | "cancel" | "refund"
+  kind: "cash" | "destination" | "history" | "cancel" | "refund" | "payment"
   orderId: Id<"orders">
   trigger: HTMLElement | null
   fallbackId: string
@@ -57,6 +59,7 @@ export function WorkspaceOrderDialog({
 }) {
   const { copy, language } = useCopy()
   const pos = usePosCopy()
+  const paymentText = usePaymentCopy()
   const queryDetail = useQuery(api.orders.detail, {
     storeId,
     orderId: session.orderId,
@@ -74,6 +77,7 @@ export function WorkspaceOrderDialog({
   const recordCash = useMutation(api.orders.recordCash)
   const assign = useMutation(api.orders.assignDestination)
   const action = usePosCommand()
+  const [paymentPending, setPaymentPending] = useState(false)
   const [selected, setSelected] = useState<string | null>(null)
   const order = detail?.order
   const command = { storeId, orderId: session.orderId }
@@ -100,6 +104,25 @@ export function WorkspaceOrderDialog({
         popup={popup}
         overlay={overlay}
       />
+    )
+  if (session.kind === "payment")
+    return (
+      <EditorDialog
+        open={open}
+        pending={paymentPending}
+        className={popup}
+        overlayClassName={overlay}
+        title={paymentText.checkout}
+        closeLabel={pos.close}
+        onClose={onClose}
+        finalFocus={finalFocus}
+      >
+        <PaymentCheckout
+          onPendingChange={setPaymentPending}
+          access={command}
+          cancelled={order?.status === "cancelled"}
+        />
+      </EditorDialog>
     )
   if (session.kind === "cash")
     return (
@@ -211,8 +234,12 @@ export function WorkspaceOrderDialog({
                 className="space-y-1 rounded-lg border p-3 text-sm [overflow-wrap:anywhere]"
               >
                 <p className="font-medium">
-                  {collection.method === "cash" ? pos.cashReceived : "MMQR"} ·{" "}
-                  {formatMMK(collection.amount)}
+                  {collection.method === "cash"
+                    ? pos.cashReceived
+                    : collection.simulated
+                      ? paymentText.mmqr
+                      : "MMQR"}{" "}
+                  · {formatMMK(collection.amount)}
                 </p>
                 <p>
                   {pos.reference}: {collection.reference}
@@ -253,7 +280,9 @@ export function WorkspaceOrderDialog({
                             {formatMMK(refund.amount)} ·{" "}
                             {refund.method === "cash"
                               ? pos.cashReceived
-                              : "MMQR"}
+                              : refund.simulated
+                                ? paymentText.mmqr
+                                : "MMQR"}
                           </p>
                           <p>
                             {pos.reference}: {refund.reference}

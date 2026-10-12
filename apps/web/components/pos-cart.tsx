@@ -3,7 +3,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { ShoppingCart01Icon, Image01Icon } from "@hugeicons/core-free-icons"
-import type { Dispatch, SetStateAction } from "react"
+import { useState, type Dispatch, type SetStateAction } from "react"
 import { useMutation, useQuery } from "convex/react"
 import { ConvexError } from "convex/values"
 import {
@@ -27,6 +27,8 @@ import { usePosCommand } from "@/lib/use-pos-command"
 import type { useSubmissionAttempt } from "@/lib/submission-attempt"
 import { useCopy } from "./language-switcher"
 import { OrderSummary } from "./order-summary"
+import { PaymentMethodField } from "./payment-method-field"
+import { usePaymentCopy } from "@/lib/payment-copy"
 import { OrderActions } from "./order-actions"
 
 export type CartLine = { itemId: Id<"menuItems">; quantity: number }
@@ -48,6 +50,8 @@ export function PosCart({
   setNote: (note: string) => void
 }) {
   const pos = usePosCopy()
+  const paymentText = usePaymentCopy()
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "mmqr">("cash")
   const { copy } = useCopy()
   const action = usePosCommand()
   const attempt = recovery.attempt
@@ -92,6 +96,7 @@ export function PosCart({
     const input = attempt ?? {
       storeId,
       submissionKey: crypto.randomUUID(),
+      paymentMethod,
       note,
       lines: lines.map((line) => ({
         ...line,
@@ -255,6 +260,9 @@ export function PosCart({
               )}
             </>
           )}
+          {recovery.broken && (
+            <Feedback tone="error">{pos.storageRequired}</Feedback>
+          )}
           {action.failure && <Feedback tone="error">{action.failure}</Feedback>}
         </CardContent>
       </Card>
@@ -268,20 +276,32 @@ export function PosCart({
             {tableData && !tableData.acceptingOrders && (
               <Feedback>{pos.expired}</Feedback>
             )}
+            <PaymentMethodField
+              id="counter-payment-method"
+              value={paymentMethod}
+              onChange={setPaymentMethod}
+              disabled={action.pending}
+            />
             <SubmitButton
               className="w-full"
               type="button"
               pending={action.pending}
               pendingLabel={copy.working}
               disabled={
-                invalid || !action.connected || !tableData?.acceptingOrders
+                invalid ||
+                recovery.broken ||
+                !action.connected ||
+                !tableData?.acceptingOrders
               }
               onClick={submit}
             >
-              {pos.saveOrder}
+              {paymentMethod === "mmqr" ? paymentText.save : pos.saveOrder}
             </SubmitButton>
-            <p className="text-xs text-muted-foreground">{pos.cashFlow}</p>
-            <p className="text-xs text-muted-foreground">{pos.mmqrLater}</p>
+            <p className="text-xs text-muted-foreground">
+              {paymentMethod === "mmqr"
+                ? paymentText.beforeCooking
+                : pos.cashFlow}
+            </p>
           </CardContent>
         </Card>
       )}

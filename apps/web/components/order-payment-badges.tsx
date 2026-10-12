@@ -2,6 +2,7 @@
 
 import { Badge } from "@workspace/ui/components/badge"
 import { usePosCopy } from "@/lib/pos-copy"
+import { usePaymentCopy } from "@/lib/payment-copy"
 import { formatMMK } from "@/lib/menu"
 
 export function OrderPaymentBadges({
@@ -9,15 +10,23 @@ export function OrderPaymentBadges({
   refunded,
   cashOnly,
   cancelled,
+  simulated = false,
 }: {
   paid: boolean
   refunded: number
   cashOnly: boolean
+  simulated?: boolean
   cancelled: boolean
 }) {
   const pos = usePosCopy()
+  const paymentText = usePaymentCopy()
   return (
     <>
+      {simulated && (
+        <Badge variant="outline" className="h-auto whitespace-normal">
+          {paymentText.simulation}
+        </Badge>
+      )}
       <Badge variant={paid ? "secondary" : "outline"}>
         {paid
           ? cashOnly

@@ -3,6 +3,7 @@ import { paginationOptsValidator } from "convex/server"
 import { internalMutation, query, type QueryCtx } from "./_generated/server"
 import type { Doc, Id } from "./_generated/dataModel"
 import { internal } from "./_generated/api"
+import { syncPaymentReview } from "./lib/payment_review"
 import { migrateCash, orderMoney } from "./lib/order_money"
 import {
   reportCollection,
@@ -98,6 +99,7 @@ async function financialRow(
     eventAt: "completedAt" in record ? record.completedAt : record.collectedAt,
     recordedAt: record.recordedAt,
     method: record.method,
+    simulated: record.simulated ?? false,
     reference: record.reference,
     amount: record.amount,
     order: bill(order),
@@ -211,8 +213,8 @@ export const backfill = internalMutation({
     { storeId, phase = "cash", cursor }
   ): Promise<{ isDone: boolean; nextCursor: string }> => {
     const state = await reportState(ctx, storeId)
-    if (phase === "cash" && !cursor && state.ready)
-      await ctx.db.patch(state._id, { ready: false })
+    if (phase === "cash" && !cursor)
+      await ctx.db.patch(state._id, { ready: false, paymentReviewReady: false })
     const options = { cursor: cursor ?? null, numItems: 100 }
     const page =
       phase === "cash"
@@ -240,12 +242,14 @@ export const backfill = internalMutation({
       if ("receivedAt" in record) await migrateCash(ctx, record)
       else if ("completedAt" in record) await reportRefund(ctx, record._id)
       else if ("collectedAt" in record) await reportCollection(ctx, record._id)
-      else
+      else {
+        await syncPaymentReview(ctx, record._id)
         await reportUnpaid(
           ctx,
           record._id,
           (await orderMoney(ctx, record)).money.due
         )
+      }
     }
     if (!page.isDone)
       await ctx.scheduler.runAfter(0, internal.reports.backfill, {
@@ -264,7 +268,8 @@ export const backfill = internalMutation({
         storeId,
         phase: next,
       })
-    } else await ctx.db.patch(state._id, { ready: true })
+    } else
+      await ctx.db.patch(state._id, { ready: true, paymentReviewReady: true })
     return { isDone: page.isDone, nextCursor: page.continueCursor }
   },
 })

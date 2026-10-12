@@ -19,6 +19,8 @@ import {
 import { destinationInput } from "./lib/order_values"
 import { orderLineInput, snapshotOrderLines } from "./lib/order_lines"
 import { isReadyToCook } from "../lib/order-readiness"
+import { syncPaymentReview } from "./lib/payment_review"
+import { requireSimulator } from "./lib/payment_config"
 
 const command = { storeId: v.id("stores"), orderId: v.id("orders") }
 async function accessOrder(
@@ -59,6 +61,7 @@ export const createCounter = mutation({
     submissionKey: v.string(),
     lines: v.array(orderLineInput),
     note: v.string(),
+    paymentMethod: v.optional(v.union(v.literal("cash"), v.literal("mmqr"))),
   },
   handler: async (ctx, args) => {
     const { user, store } = await requireStoreMembership(ctx, args.storeId)
@@ -76,11 +79,15 @@ export const createCounter = mutation({
       )
       .unique()
     if (accepted) {
-      if (accepted.payload !== payload)
+      if (
+        accepted.payload !== payload ||
+        (accepted.paymentMethod ?? "cash") !== (args.paymentMethod ?? "cash")
+      )
         throw new ConvexError("SUBMISSION_KEY_REUSED")
       return accepted._id
     }
     assertAcceptingOrders(store)
+    if (args.paymentMethod === "mmqr") requireSimulator()
     if (args.submissionKey.length < 8 || args.submissionKey.length > 100)
       throw new ConvexError("INVALID_ORDER")
     const { lines, total } = await snapshotOrderLines(
@@ -96,6 +103,7 @@ export const createCounter = mutation({
       payload,
       createdAt: Date.now(),
       source: "counter",
+      paymentMethod: args.paymentMethod ?? "cash",
       lines,
       note: args.note,
       total,
@@ -168,10 +176,7 @@ export const soundBaseline = mutation({
       .collect()
     const ready = await Promise.all(
       pending.map(async (order) =>
-        isReadyToCook(
-          order,
-          order.source === "counter" && !!(await paymentFor(ctx, order._id))
-        )
+        isReadyToCook(order, (await orderMoney(ctx, order)).money.funded)
           ? order._id
           : null
       )
@@ -268,6 +273,8 @@ export const recordCash = mutation({
   handler: async (ctx, { storeId, orderId }) => {
     const { order, user } = await accessOrder(ctx, storeId, orderId)
     if (order.status === "cancelled") throw new ConvexError("ORDER_CANCELLED")
+    if (order.paymentMethod === "mmqr")
+      throw new ConvexError("PAYMENT_METHOD_FIXED")
     if (await paymentFor(ctx, orderId)) return
     const at = Date.now()
     const collectionId = await ctx.db.insert("orderCollections", {
@@ -284,6 +291,7 @@ export const recordCash = mutation({
     })
     await reportCollection(ctx, collectionId)
     await reportUnpaid(ctx, orderId, 0)
+    await syncPaymentReview(ctx, orderId)
     await ctx.db.patch(orderId, { cashCollectionPending: false })
     await event(ctx, storeId, orderId, user._id, user.name, "cash_received")
   },
@@ -293,7 +301,10 @@ export const assignDestination = mutation({
   handler: async (ctx, { storeId, orderId, destination: input }) => {
     const { order, user } = await accessOrder(ctx, storeId, orderId)
     if (order.status === "cancelled") throw new ConvexError("ORDER_CANCELLED")
-    if (order.source === "counter" && !(await paymentFor(ctx, orderId)))
+    if (
+      order.source === "counter" &&
+      !(await orderMoney(ctx, order)).money.funded
+    )
       throw new ConvexError("PAYMENT_REQUIRED")
     if (order.source === "qr" && input.kind !== "table")
       throw new ConvexError("TABLE_REQUIRED")
@@ -335,7 +346,10 @@ export const startCooking = mutation({
     const { order, user } = await accessOrder(ctx, storeId, orderId)
     if (order.status === "cancelled") throw new ConvexError("ORDER_CANCELLED")
     if (order.status !== "pending") return
-    if (order.source === "counter" && !(await paymentFor(ctx, orderId)))
+    if (
+      (order.source === "counter" || order.paymentMethod === "mmqr") &&
+      !(await orderMoney(ctx, order)).money.funded
+    )
       throw new ConvexError("PAYMENT_REQUIRED")
     if (!order.destination) throw new ConvexError("DESTINATION_REQUIRED")
     await ctx.db.patch(orderId, { status: "cooking", cookingAt: Date.now() })
@@ -403,6 +417,7 @@ export const cancel = mutation({
       },
     })
     await reportUnpaid(ctx, order._id, 0)
+    await syncPaymentReview(ctx, order._id)
     await ctx.db.insert("orderEvents", {
       storeId: args.storeId,
       orderId: order._id,
@@ -489,6 +504,7 @@ export const recordRefund = mutation({
       collectionId,
       amount: collection.amount,
       method: collection.method,
+      ...(collection.simulated ? { simulated: true } : {}),
       reference: collection.reference,
       currency: collection.currency,
       collectedAt: collection.collectedAt,
@@ -505,6 +521,7 @@ export const recordRefund = mutation({
     await reportCollection(ctx, collectionId)
     await reportRefund(ctx, refundId)
     await reportUnpaid(ctx, order._id, 0)
+    await syncPaymentReview(ctx, order._id)
     await ctx.db.insert("orderEvents", {
       storeId: args.storeId,
       orderId: order._id,

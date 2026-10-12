@@ -11,6 +11,7 @@ const commandSchema = z.object({
   token,
   tableId: z.string(),
   note: z.string().max(2000),
+  paymentMethod: z.enum(["cash", "mmqr"]).optional(),
   lines: z
     .array(
       z.object({
@@ -22,7 +23,15 @@ const commandSchema = z.object({
     .min(1)
     .max(100),
 })
-const recordSchema = z.object({ version: z.literal(1), command: commandSchema })
+const recordSchema = z.discriminatedUnion("version", [
+  z.object({
+    version: z.literal(1),
+    command: commandSchema.refine(
+      (command) => command.paymentMethod !== "mmqr"
+    ),
+  }),
+  z.object({ version: z.literal(2), command: commandSchema }),
+])
 const changed = "qr-pos-guest-recovery-changed"
 function subscribe(callback: () => void) {
   window.addEventListener("storage", callback)
@@ -83,7 +92,10 @@ export function useGuestRecovery(storeId: string) {
   function save(command: GuestCommand) {
     if (!state) throw new Error("Unreadable recovery data")
     const key = `${prefix}attempt:${command.token}`
-    const record = recordSchema.parse({ version: 1, command })
+    const record = recordSchema.parse({
+      version: command.paymentMethod === "mmqr" ? 2 : 1,
+      command,
+    })
     if (record.command.storeId !== storeId)
       throw new Error("Wrong recovery store")
     const encoded = JSON.stringify(record)

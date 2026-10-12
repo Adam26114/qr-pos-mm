@@ -17,6 +17,8 @@ export async function reportState(
     ready,
     unpaidAmount: 0,
     unpaidCount: 0,
+    paymentReviewCount: 0,
+    paymentReviewReady: ready,
   })
   return (await ctx.db.get(id))!
 }

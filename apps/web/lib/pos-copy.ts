@@ -2,6 +2,7 @@
 import { useCopy } from "@/components/language-switcher"
 
 const en = {
+  mmqr_received: "Simulated MMQR received",
   cancelled: "Cancelled",
   refund_recorded: "Refund recorded",
   historyTab: "History",
@@ -143,6 +144,7 @@ const en = {
   manageCategories: "Manage categories",
 }
 const my: Record<keyof typeof en, string> = {
+  mmqr_received: "စမ်းသပ် MMQR လက်ခံပြီး",
   cancelled: "ပယ်ဖျက်ပြီး",
   refund_recorded: "ငွေပြန်အမ်းမှု မှတ်တမ်းတင်ပြီး",
   historyTab: "မှတ်တမ်း",

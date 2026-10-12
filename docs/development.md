@@ -57,7 +57,7 @@ Set `SITE_URL` to the actual HTTPS frontend URL and configure a random `BETTER_A
 
 Store creation is an atomic, idempotent Convex mutation: one owner membership, one store, and one trial. Private owner store reads authorize current owner membership. Operational commands must use `requireStoreMembership`, and owner-only commands must use `requireStoreOwner`; neither should trust a role cached in a browser or JWT. `convex/lib/store_access.ts` provides the shared server-time entitlement and new-order guard; later order commands must invoke that guard. Scheduled expiry updates invalidate subscribed workspace queries; delayed scheduling cannot extend backend access. Historical workspace reads remain available after expiry.
 
-Implemented: issues #2 through #10, plus the approved staff access and menu/Orders redesigns. Owners manage staff at `/workspace/staff` through shadcn data tables. Create a single-use join link with a 1, 3 or 7-day expiry (default 7), copy it while the creation result is open, and share it with the intended staff member. No email delivery is required for this flow. The backend stores only a token hash; regenerating returns a new URL and invalidates the previous one. Owners can revoke pending links. Existing email invitations remain email-bound and usable until acceptance, revocation or expiry.
+Implemented: issues #2 through #11, plus the approved staff access and menu/Orders redesigns. Owners manage staff at `/workspace/staff` through shadcn data tables. Create a single-use join link with a 1, 3 or 7-day expiry (default 7), copy it while the creation result is open, and share it with the intended staff member. No email delivery is required for this flow. The backend stores only a token hash; regenerating returns a new URL and invalidates the previous one. Owners can revoke pending links. Existing email invitations remain email-bound and usable until acceptance, revocation or expiry.
 
 Staff register with their own name, email and password, or sign in to an existing individual account, then optionally enter a contact phone and join. Acceptance creates only a staff membership, never a store or trial. Phone is membership contact information, never an authentication identifier. At most one active store membership is allowed per account.
 
@@ -116,3 +116,30 @@ After deploying the backend, from `apps/web` run `bunx convex run reports:backfi
 The current-date query uses unique refresh arguments to avoid a stale cached server clock. The client schedules the next Yangon midnight from server time, refreshes on foreground/reconnect, and keeps explicit past periods fixed. Persisted report results are not copied into Redux or browser storage.
 
 Run `bun run test convex/reports.test.ts` for report public-operation coverage. In the dedicated local checkout, run `E2E_PORT=3001 bun run test:e2e e2e/reports.spec.ts e2e/owner.spec.ts e2e/workspace.spec.ts e2e/orders-board.spec.ts e2e/refunds.spec.ts`. Report browser coverage includes owner/staff isolation, live financial changes, historical selection, unpaid row removal/focus, pagination, server-clock refresh, themes, languages and narrow layouts.
+
+## Local MMQR simulator (ticket #11)
+
+Use a separate isolated checkout and the dedicated 3210/3211 backend. Preserve the hosted `.env.local` profile. Explicitly enable the **backend** `ORDER_PAYMENT_SIMULATOR=enabled`, set a private random `SIMULATOR_EVENT_SECRET` of at least 32 characters, and set backend `SITE_URL` to the loopback frontend (3001 for verification). `CONVEX_CLOUD_URL` and `CONVEX_SITE_URL` are runtime deployment URLs. All three URLs must use HTTP and localhost/127.0.0.1/::1. A cloud deployment rejects simulation even if its opt-in flag is accidentally enabled. Keep `ORDER_PAYMENT_SIMULATOR` disabled and its signing secret unset on hosted/production deployments. No NEXT_PUBLIC switch or developer browser page controls payment outcomes.
+
+Cash remains the default. Local guest review and counter checkout offer **MMQR — simulation**. Submission fixes the method and saves the bill first. The shared panel automatically creates or recovers the existing non-payable test QR, shows its 15-minute server deadline, and provides Check payment and retry for failed/expired attempts. Uncertainty and local expiry alone do not prove that no money was received. Reconciliation precedes a replacement. Exact start retries recover their original attempt, including keys that originally reused another unresolved attempt. Interrupted checkout creation offers Recover checkout, reusing the same durable attempt without replacing uncertain payment. Guest capabilities authorize guest operations; current membership authorizes operational checks. Clients cannot submit outcomes, amounts or merchant routing.
+
+Developer commands run only from the isolated checkout's `apps/web`:
+
+```bash
+bunx convex run simulator:creation '{"available":false}'
+# Restore availability before recovery:
+bunx convex run simulator:creation '{"available":true}'
+bunx convex run simulator:attempts '{"orderId":"<order id>"}'
+bunx convex run simulator:outcome '{"attemptId":"<attempt id>","outcome":"succeeded","transactionId":"test-payment-1"}'
+bunx convex run simulator:outcome '{"attemptId":"<attempt id>","outcome":"failed"}'
+bunx convex run simulator:outcome '{"attemptId":"<attempt id>","outcome":"expired"}'
+bunx convex run simulator:outcome '{"attemptId":"<attempt id>","outcome":"uncertain","notify":false}'
+```
+
+`outcome` changes the protected simulated provider, then delivers signed events through `/order-payment-events`. `notify:false` retains the provider result without notification to exercise Check payment reconciliation. Restore provider availability with pending/failed/expired/succeeded. Reuse a transaction identity to repeat a notification; choose a new identity to exercise a genuine additional collection. An optional `completedAt` is UTC milliseconds; `omitCompletionTime:true` exercises verification-time fallback. Never share the signing secret or guest capability in logs or issue comments.
+
+The ingestion transaction validates merchant, purpose, reference, MMK currency, exact bill amount, completion time and provider transaction identity. Confirmation records collections, reporting/unpaid contributions and audit evidence atomically. Late payments on cancelled bills remain collected, and extra money appears in owner Review payments. No outcome reopens a cancelled order or automatically returns money. Refund records inherit the simulated label. Confirmed MMQR funding gates QR cooking and counter assignment/cooking; cash collection on an MMQR bill is rejected. Existing seated Cash orders retain pre-payment preparation and post-meal collection.
+
+After deployment with simulation disabled, rerun `bunx convex run reports:backfillAll '{}'`. Its bounded restartable order phase also initializes indexed payment-review membership/counts and readiness. Existing contribution markers prevent double counting during live operations and repeated backfills. Confirm every `reportStates` row is report-ready and payment-review-ready; verify `payments:capabilities` is false on hosted development. Review controls show preparation feedback during backfill, never partial counts.
+
+Run `bun run test convex/payments.test.ts` and in the isolated checkout `E2E_PORT=3001 bun run test:e2e e2e/payments.spec.ts e2e/pos.spec.ts e2e/guest-orders.spec.ts e2e/qr-operations.spec.ts`. The payment journey uses protected CLI outcomes, actual signed HTTP delivery, separate staff/owner/guest sessions, a lost action acknowledgement, reload recovery, reconciliation, funding gates, owner refund resolution and simulated reporting. Run the full backend suite only after browser verification finishes, then the production build. Simulation does not validate real merchant routing or paid launch readiness; those remain #13 and later work.
