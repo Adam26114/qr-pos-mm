@@ -61,7 +61,7 @@ A counter order to be taken away rather than served at a table.
 The store's point-of-sale workspace for entering counter orders and managing sales alongside QR orders.
 
 **Order Status**:
-The progress of an order through the store's preparation and service process, such as pending, cooking, or served.
+The progress of an order through the store's preparation and service process: pending, cooking, served, or cancelled.
 _Avoid_: Payment status.
 
 **Order Payment**:
@@ -79,6 +79,15 @@ _Avoid_: Refund.
 **Refund**:
 The return of a full order payment, handled externally and recorded by the owner in the platform. It does not erase a served order's fulfillment history.
 _Avoid_: Cancellation.
+
+**Collection**:
+A confirmed money movement for an order, retaining method, payment reference, amount, and collection-time provenance. Two genuine payments are two collections; repeated notification of one payment is not another collection.
+
+**Full Refund Record**:
+An owner's immutable attestation that one entire collection was returned externally, with its reason, completion time, and separate recording actor/time. It does not execute a transfer. Refunding an excess collection preserves fulfillment when the required bill remains funded.
+
+**Uncertain Refund Chronology**:
+A refund completion that preceded a collection's late verification timestamp when its actual completion time was unavailable. Retain the evidence for review rather than treating verification time as proof that collection occurred later.
 
 **Collected Sales**:
 Customer order payments received by a store during a reporting period. Unpaid orders are shown separately.

@@ -184,7 +184,7 @@ test("staff prepares seated cash, corrects its table, collects after serving and
     ).toBeVisible()
     await expect(guest.getByText("Served", { exact: true })).toBeVisible()
     await staff
-      .getByRole("tab", { name: "Served history", exact: true })
+      .getByRole("tab", { name: "History", exact: true })
       .click()
     await staff.getByRole("button", { name: /^Order actions:/ }).click()
     await staff

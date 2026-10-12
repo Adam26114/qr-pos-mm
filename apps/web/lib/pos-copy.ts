@@ -2,6 +2,52 @@
 import { useCopy } from "@/components/language-switcher"
 
 const en = {
+  cancelled: "Cancelled",
+  refund_recorded: "Refund recorded",
+  historyTab: "History",
+  historyFilter: "History status",
+  allHistory: "All",
+  cancelOrder: "Cancel order",
+  cancelIntro:
+    "Stop preparing this order. Its payment stays collected until a completed refund is recorded separately.",
+  cancelReason: "Cancellation reason",
+  internalReason:
+    "Internal only. Customers see the order status, not this reason.",
+  recordRefund: "Record full refund",
+  refundIntro:
+    "Record money already returned physically or through the payment provider. This does not send a refund.",
+  refundReason: "Refund reason",
+  collection: "Collected payment",
+  completedAt: "Refund completion time",
+  now: "Now",
+  earlier: "Earlier time",
+  yangonTime: "Date and time in Asia/Yangon (UTC+06:30).",
+  collected: "Payment collected",
+  notCollected: "Not collected",
+  refunded: "Refund recorded",
+  refundNone:
+    "No eligible collected payment. Cancel active work before refunding its required payment.",
+  refundRequiredCancel:
+    "Cancel the order before refunding its required payment.",
+  refundDuplicate: "This collected payment already has a full refund record.",
+  invalidRefundDate:
+    "Use a valid completion time after actual collection and no later than now.",
+  financialInvalid:
+    "Select a collected payment and enter a reason of 1–2,000 characters.",
+  invalidCancel: "Enter a cancellation reason of 1–2,000 characters.",
+  cannotCancel: "Only pending or cooking orders can be cancelled.",
+  orderCancelled:
+    "This order was cancelled. Preparation and collection are stopped.",
+  retryFinancial: "Retry the same record",
+  chronologyReview:
+    "Chronology needs review: refund completion preceded payment verification.",
+  recordedAt: "Recorded at",
+  reference: "Payment reference",
+  collectionTime: "Collection time",
+  cash_recorded: "Cash recorded",
+  provider_completed: "Provider completion",
+  verification_fallback: "Verification time (actual collection time unknown)",
+
   orders: "Orders",
   counterOrder: "Counter order",
   servedHistory: "Served history",
@@ -65,7 +111,7 @@ const en = {
   liveOrders: "Live orders",
   liveIntro: "See incoming orders and their current status.",
   noOpenOrders: "No open orders.",
-  noHistory: "No served orders yet.",
+  noHistory: "No orders in this history view.",
   history: "Order history",
   loadMore: "Load more",
   destinationChanged: "Destination changed",
@@ -97,6 +143,52 @@ const en = {
   manageCategories: "Manage categories",
 }
 const my: Record<keyof typeof en, string> = {
+  cancelled: "ပယ်ဖျက်ပြီး",
+  refund_recorded: "ငွေပြန်အမ်းမှု မှတ်တမ်းတင်ပြီး",
+  historyTab: "မှတ်တမ်း",
+  historyFilter: "မှတ်တမ်းအခြေအနေ",
+  allHistory: "အားလုံး",
+  cancelOrder: "အော်ဒါပယ်ဖျက်မည်",
+  cancelIntro:
+    "ဤအော်ဒါကို ဆက်မပြင်ဆင်တော့ပါ။ ငွေပြန်အမ်းပြီးကြောင်း သီးခြားမှတ်တမ်းမတင်မချင်း လက်ခံငွေမှတ်တမ်းကို ဆက်သိမ်းထားပါမည်။",
+  cancelReason: "ပယ်ဖျက်ရသည့်အကြောင်းရင်း",
+  internalReason:
+    "ဆိုင်အတွင်းသာ မြင်ရမည်။ ဖောက်သည်သည် အကြောင်းရင်းကို မမြင်ရပါ။",
+  recordRefund: "ငွေအပြည့်ပြန်အမ်းမှု မှတ်တမ်းတင်မည်",
+  refundIntro:
+    "ငွေသား သို့မဟုတ် ငွေပေးချေမှုဝန်ဆောင်မှုမှ ပြန်အမ်းပြီးသောငွေကိုသာ မှတ်တမ်းတင်ပါ။ ဤလုပ်ဆောင်ချက်က ငွေပြန်မပို့ပါ။",
+  refundReason: "ပြန်အမ်းရသည့်အကြောင်းရင်း",
+  collection: "လက်ခံထားသောငွေ",
+  completedAt: "ငွေပြန်အမ်းပြီးချိန်",
+  now: "ယခု",
+  earlier: "အရင်အချိန်",
+  yangonTime: "Asia/Yangon အချိန် (UTC+06:30) ဖြင့် ရက်စွဲနှင့်အချိန်ထည့်ပါ။",
+  collected: "ငွေလက်ခံပြီး",
+  notCollected: "ငွေမလက်ခံထားပါ",
+  refunded: "ငွေပြန်အမ်းမှု မှတ်တမ်းတင်ပြီး",
+  refundNone:
+    "ပြန်အမ်းနိုင်သော လက်ခံငွေမရှိပါ။ လိုအပ်သောငွေကို ပြန်အမ်းရန် အော်ဒါကို အရင်ပယ်ဖျက်ပါ။",
+  refundRequiredCancel: "လိုအပ်သောငွေကို ပြန်အမ်းရန် အော်ဒါကို အရင်ပယ်ဖျက်ပါ။",
+  refundDuplicate: "ဤလက်ခံငွေအတွက် အပြည့်ပြန်အမ်းမှု မှတ်တမ်းရှိပြီး ဖြစ်သည်။",
+  invalidRefundDate:
+    "အမှန်တကယ်ငွေလက်ခံပြီးနောက်နှင့် ယခုအချိန်ထက် မကျော်သော ပြန်အမ်းချိန်ကို ထည့်ပါ။",
+  financialInvalid:
+    "လက်ခံငွေတစ်ခုရွေးပြီး အကြောင်းရင်း စာလုံး ၁–၂,၀၀၀ အတွင်း ထည့်ပါ။",
+  invalidCancel: "ပယ်ဖျက်ရသည့်အကြောင်းရင်း စာလုံး ၁–၂,၀၀၀ အတွင်း ထည့်ပါ။",
+  cannotCancel:
+    "စောင့်နေသော သို့မဟုတ် ချက်ပြုတ်နေသော အော်ဒါကိုသာ ပယ်ဖျက်နိုင်ပါသည်။",
+  orderCancelled:
+    "ဤအော်ဒါကို ပယ်ဖျက်ပြီးဖြစ်သည်။ ပြင်ဆင်မှုနှင့် ငွေလက်ခံမှုကို ရပ်ထားပါသည်။",
+  retryFinancial: "တူညီသောမှတ်တမ်းကို ပြန်တင်မည်",
+  chronologyReview:
+    "အချိန်အစီအစဉ် စစ်ရန်လိုသည်။ ငွေအတည်ပြုချိန်မတိုင်မီ ပြန်အမ်းထားသည်။",
+  recordedAt: "မှတ်တမ်းတင်ချိန်",
+  reference: "ငွေပေးချေမှု ရည်ညွှန်းချက်",
+  collectionTime: "ငွေလက်ခံချိန်",
+  cash_recorded: "ငွေသားမှတ်တမ်းတင်ချိန်",
+  provider_completed: "ဝန်ဆောင်မှုမှ ငွေလက်ခံပြီးချိန်",
+  verification_fallback: "အတည်ပြုချိန် (အမှန်တကယ် လက်ခံချိန်မသိရ)",
+
   orders: "အော်ဒါများ",
   counterOrder: "ကောင်တာအော်ဒါ",
   servedHistory: "ပေးပို့ပြီး အော်ဒါမှတ်တမ်း",

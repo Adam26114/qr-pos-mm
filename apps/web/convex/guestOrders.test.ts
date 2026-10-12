@@ -50,6 +50,8 @@ test("a seated guest gets a fixed separate bill and only a private capability ca
       total: 5000,
     },
     paid: false,
+    money: { collected: 0, refunded: 0, due: 5000 },
+    cashOnly: true,
   })
   const second = await t.mutation(api.guestOrders.submit, {
     ...command,

@@ -71,7 +71,11 @@ function BoardOrderActions({
         : order.destination?.kind === "takeaway"
           ? pos.handover
           : pos.markServed
-  if (order.status === "served" && order.payment) return null
+  if (
+    order.status === "cancelled" ||
+    (order.status === "served" && order.payment)
+  )
+    return null
   return (
     <div className="space-y-2">
       <SubmitButton
@@ -128,6 +132,8 @@ function DefaultOrderActions({
   const [correcting, setCorrecting] = useState(false)
   const [choosing, setChoosing] = useState(false)
   const command = { storeId: order.storeId, orderId: order._id }
+  if (order.status === "cancelled")
+    return <Feedback>{pos.orderCancelled}</Feedback>
   const id = `destination-${order._id}`
   const canAssign = order.source === "qr" || !!order.payment
   const options = [

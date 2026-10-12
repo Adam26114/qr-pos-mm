@@ -1,5 +1,7 @@
 "use client"
 
+import { financialSnapshot } from "@/lib/refund-eligibility"
+import { OrderFinancialDialog } from "./order-financial-dialog"
 import { useState } from "react"
 import { useMutation, useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
@@ -19,7 +21,7 @@ import type { WorkspaceOrder } from "./order-actions"
 import styles from "./orders.module.css"
 
 export type OrderDialogSession = {
-  kind: "cash" | "destination" | "history"
+  kind: "cash" | "destination" | "history" | "cancel" | "refund"
   orderId: Id<"orders">
   trigger: HTMLElement | null
   fallbackId: string
@@ -52,10 +54,16 @@ export function WorkspaceOrderDialog({
 }) {
   const { copy, language } = useCopy()
   const pos = usePosCopy()
-  const detail = useQuery(api.orders.detail, {
+  const queryDetail = useQuery(api.orders.detail, {
     storeId,
     orderId: session.orderId,
   })
+  const detail = queryDetail
+    ? {
+        ...queryDetail,
+        ...financialSnapshot({ ...queryDetail.order, ...queryDetail }),
+      }
+    : undefined
   const tables = useQuery(
     api.tables.list,
     session.kind === "destination" ? { storeId } : "skip"
@@ -75,7 +83,21 @@ export function WorkspaceOrderDialog({
       ? session.trigger
       : document.getElementById(session.fallbackId)
   const date = (at: number) =>
-    new Date(at).toLocaleString(language === "my" ? "my-MM" : "en-GB")
+    new Date(at).toLocaleString(language === "my" ? "my-MM" : "en-GB", {
+      timeZone: "Asia/Yangon",
+    })
+  if (session.kind === "cancel" || session.kind === "refund")
+    return (
+      <OrderFinancialDialog
+        detail={detail}
+        session={session}
+        open={open}
+        onClose={onClose}
+        finalFocus={finalFocus}
+        popup={popup}
+        overlay={overlay}
+      />
+    )
   if (session.kind === "cash")
     return (
       <ConfirmDialog
@@ -95,7 +117,12 @@ export function WorkspaceOrderDialog({
         cancelLabel={copy.cancel}
         pendingLabel={copy.working}
         failureMessage={copy.requestFailed}
-        disabled={!detail || !!detail.payment || !action.connected}
+        disabled={
+          !detail ||
+          detail.order.status === "cancelled" ||
+          !!detail.payment ||
+          !action.connected
+        }
         confirmVariant="default"
         finalFocus={finalFocus}
         className={popup}
@@ -115,7 +142,10 @@ export function WorkspaceOrderDialog({
       label: `${pos.table} ${table.number}`,
     })),
   ]
-  const canAssign = !!order && (order.source === "qr" || !!detail?.payment)
+  const canAssign =
+    !!order &&
+    order.status !== "cancelled" &&
+    (order.source === "qr" || !!detail?.payment)
   return (
     <EditorDialog
       open={open}
@@ -139,6 +169,26 @@ export function WorkspaceOrderDialog({
             <p className="text-sm">
               {pos.created}: {date(detail.order.createdAt)}
             </p>
+            {detail.collections.map((collection) => (
+              <div
+                key={collection._id}
+                className="space-y-1 rounded-lg border p-3 text-sm [overflow-wrap:anywhere]"
+              >
+                <p className="font-medium">
+                  {collection.method === "cash" ? pos.cashReceived : "MMQR"} ·{" "}
+                  {formatMMK(collection.amount)}
+                </p>
+                <p>
+                  {pos.reference}: {collection.reference}
+                </p>
+                <p>
+                  {pos.collectionTime}: {date(collection.collectedAt)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {pos[collection.timeSource]}
+                </p>
+              </div>
+            ))}
             <ol className="space-y-4">
               {detail.events.map((event) => (
                 <li
@@ -152,6 +202,35 @@ export function WorkspaceOrderDialog({
                         ? pos.destinationChanged
                         : pos[event.kind]}
                   </p>
+                  {event.reason && (
+                    <p className="whitespace-pre-wrap">{event.reason}</p>
+                  )}
+                  {event.kind === "refund_recorded" &&
+                    detail.refunds
+                      .filter((refund) => refund._id === event.refundId)
+                      .map((refund) => (
+                        <div key={refund._id} className="space-y-1">
+                          <p>
+                            {formatMMK(refund.amount)} ·{" "}
+                            {refund.method === "cash"
+                              ? pos.cashReceived
+                              : "MMQR"}
+                          </p>
+                          <p>
+                            {pos.reference}: {refund.reference}
+                          </p>
+                          <p className="whitespace-pre-wrap">{refund.reason}</p>
+                          <p>
+                            {pos.completedAt}: {date(refund.completedAt)}
+                          </p>
+                          <p>
+                            {pos.recordedAt}: {date(refund.recordedAt)}
+                          </p>
+                          {refund.uncertainChronology && (
+                            <Feedback>{pos.chronologyReview}</Feedback>
+                          )}
+                        </div>
+                      ))}
                   {event.kind === "destination_changed" && (
                     <p>
                       {orderDestination(event.previousDestination, pos)} →{" "}

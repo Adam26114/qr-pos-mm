@@ -188,7 +188,7 @@ test("cash counter bill survives lost submission messages and a paid unassigned 
     await expect(
       queue.getByText("No open orders.", { exact: true })
     ).toBeVisible()
-    await page.getByRole("tab", { name: "Served history", exact: true }).click()
+    await page.getByRole("tab", { name: "History", exact: true }).click()
     await expect(
       page.getByText("No sugar · သကြားမပါ", { exact: true })
     ).toBeVisible()
@@ -361,7 +361,7 @@ test("staff joins with a share link and can hand over cash orders without owner 
       page.getByText("No open orders.", { exact: true })
     ).toBeVisible()
     await staff
-      .getByRole("tab", { name: "Served history", exact: true })
+      .getByRole("tab", { name: "History", exact: true })
       .click()
     await expect(
       staff.getByText("Cash received", { exact: true })

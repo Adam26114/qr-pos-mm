@@ -75,10 +75,19 @@ function ReceiptCard({ receipt, token }: { receipt: Receipt; token: string }) {
   return (
     <FormCard
       title={text.tracking}
-      description={receipt.paid ? undefined : text.cashNote}
+      description={
+        (receipt.money?.due ?? (receipt.paid ? 0 : receipt.order.total)) > 0
+          ? text.cashNote
+          : undefined
+      }
     >
       <div className="space-y-5">
-        <OrderSummary order={receipt.order} payment={receipt.paid} />
+        <OrderSummary
+          order={receipt.order}
+          payment={receipt.paid}
+          money={receipt.money}
+          cashOnly={receipt.cashOnly}
+        />
         <TextField
           id="tracking-link"
           label={text.link}

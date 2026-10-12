@@ -23,6 +23,15 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@workspace/ui/components/dropdown-menu"
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@workspace/ui/components/select"
+import { eligibleRefunds, financialSnapshot } from "@/lib/refund-eligibility"
+import { OrderPaymentBadges } from "./order-payment-badges"
 import { LoadingState } from "@workspace/ui/composed/loading-state"
 import { Feedback } from "@workspace/ui/composed/feedback"
 import { SubmitButton } from "@workspace/ui/composed/submit-button"
@@ -57,6 +66,9 @@ function OrderQueue({ storeId }: { storeId: Order["storeId"] }) {
   const pos = usePosCopy()
   const { connected } = useWorkspace()
   const [view, setView] = useState<"open" | "served">("open")
+  const [historyStatus, setHistoryStatus] = useState<
+    "all" | "served" | "cancelled"
+  >("all")
   const [lane, setLane] = useState<Lane>("pending")
   const [wide, setWide] = useState(false)
   const container = useRef<HTMLElement>(null)
@@ -79,7 +91,12 @@ function OrderQueue({ storeId }: { storeId: Order["storeId"] }) {
   const queue = useQuery(api.orders.queue, { storeId })
   const history = usePaginatedQuery(
     api.orders.history,
-    view === "served" ? { storeId } : "skip",
+    view === "served"
+      ? {
+          storeId,
+          ...(historyStatus === "all" ? {} : { status: historyStatus }),
+        }
+      : "skip",
     { initialNumItems: 20 }
   )
   const ids = useMemo(
@@ -215,7 +232,7 @@ function OrderQueue({ storeId }: { storeId: Order["storeId"] }) {
               value="served"
               className="transition-none after:transition-none"
             >
-              {pos.servedHistory}
+              {pos.historyTab}
             </TabsTrigger>
           </TabsList>
         </div>
@@ -311,9 +328,29 @@ function OrderQueue({ storeId }: { storeId: Order["storeId"] }) {
             tabIndex={-1}
             className="sr-only focus:not-sr-only"
           >
-            {pos.servedHistory}
+            {pos.historyTab}
           </h2>
-          <section aria-label={pos.servedHistory}>
+          <Select
+            value={historyStatus}
+            onValueChange={(value) =>
+              setHistoryStatus(value as typeof historyStatus)
+            }
+          >
+            <SelectTrigger
+              aria-label={pos.historyFilter}
+              className="max-w-full"
+            >
+              <SelectValue>
+                {historyStatus === "all" ? pos.allHistory : pos[historyStatus]}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{pos.allHistory}</SelectItem>
+              <SelectItem value="served">{pos.served}</SelectItem>
+              <SelectItem value="cancelled">{pos.cancelled}</SelectItem>
+            </SelectContent>
+          </Select>
+          <section aria-label={pos.historyTab}>
             {history.status === "LoadingFirstPage" ? (
               <LoadingState label={copy.loading} />
             ) : history.results.length ? (
@@ -367,7 +404,7 @@ function LaneEmpty({ label }: { label: string }) {
 }
 
 function WorkspaceOrderTicket({
-  order,
+  order: rawOrder,
   fresh,
   keyboard,
   history,
@@ -387,7 +424,12 @@ function WorkspaceOrderTicket({
   const pos = usePosCopy()
   const guest = useGuestCopy()
   const { language } = useCopy()
-  const { connected } = useWorkspace()
+  const { connected, workspace } = useWorkspace()
+  const financialReady =
+    !!rawOrder.collections && !!rawOrder.refunds && !!rawOrder.money
+  const order = financialSnapshot(rawOrder)
+  const owner = workspace.role === "owner" && financialReady
+  const refundable = eligibleRefunds(order).length > 0
   const trigger = useRef<HTMLButtonElement>(null)
   const label = `${pos.order} · ${order._id.slice(-6).toUpperCase()}`
   const created = new Date(order.createdAt)
@@ -416,10 +458,15 @@ function WorkspaceOrderTicket({
           <Badge variant="outline">
             {order.source === "qr" ? guest.qrOrder : pos.counterOrder}
           </Badge>
-          {history && <Badge variant="outline">{pos.served}</Badge>}
-          <Badge variant={order.payment ? "secondary" : "outline"}>
-            {order.payment ? pos.cashReceived : pos.unpaid}
-          </Badge>
+          {history && <Badge variant="outline">{pos[order.status]}</Badge>}
+          <OrderPaymentBadges
+            paid={!!order.payment}
+            refunded={order.money.refunded}
+            cashOnly={order.collections.every(
+              (collection) => collection.method === "cash"
+            )}
+            cancelled={order.status === "cancelled"}
+          />
           {fresh && <Badge>{pos.newOrder}</Badge>}
         </>
       }
@@ -453,12 +500,32 @@ function WorkspaceOrderTicket({
             align="end"
             className={`w-52 ${styles.popup} ${keyboard ? styles.instant : ""}`}
           >
-            {order.destination && (order.source === "qr" || order.payment) && (
+            {order.status !== "cancelled" &&
+              order.destination &&
+              (order.source === "qr" || order.payment) && (
+                <DropdownMenuItem
+                  disabled={!connected}
+                  onClick={() => onDialog("destination", trigger.current)}
+                >
+                  {pos.correctDestination}
+                </DropdownMenuItem>
+              )}
+            {owner &&
+              (order.status === "pending" || order.status === "cooking") && (
+                <DropdownMenuItem
+                  variant="destructive"
+                  disabled={!connected}
+                  onClick={() => onDialog("cancel", trigger.current)}
+                >
+                  {pos.cancelOrder}
+                </DropdownMenuItem>
+              )}
+            {owner && refundable && (
               <DropdownMenuItem
                 disabled={!connected}
-                onClick={() => onDialog("destination", trigger.current)}
+                onClick={() => onDialog("refund", trigger.current)}
               >
-                {pos.correctDestination}
+                {pos.recordRefund}
               </DropdownMenuItem>
             )}
             <DropdownMenuItem
@@ -470,7 +537,8 @@ function WorkspaceOrderTicket({
         </DropdownMenu>
       }
       actions={
-        order.status === "served" && order.payment ? null : (
+        order.status === "cancelled" ||
+        (order.status === "served" && order.payment) ? null : (
           <OrderActions
             order={order}
             board={{

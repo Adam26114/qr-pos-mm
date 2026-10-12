@@ -209,7 +209,12 @@ export function GuestCart({
           {attempt ? (
             receipt ? (
               <>
-                <OrderSummary order={receipt.order} payment={receipt.paid} />
+                <OrderSummary
+                  order={receipt.order}
+                  payment={receipt.paid}
+                  money={receipt.money}
+                  cashOnly={receipt.cashOnly}
+                />
                 <Button
                   render={<Link href={`/orders/${attempt.token}`} />}
                   nativeButton={false}

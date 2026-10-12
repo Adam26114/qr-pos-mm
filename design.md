@@ -52,12 +52,15 @@ Small photo cards                     Items, quantities, note, total, checkout
 ## Orders layout
 
 - Keep the Orders title and compact sound toggle in one toolbar. Put new-order notifications and Mark all seen directly below it.
-- Use shadcn line tabs for Live orders and Served history. Live orders has Pending, Cooking, and Awaiting cash lanes with counts and empty states. Awaiting cash contains served unpaid orders.
+- Use shadcn line tabs for Live orders and History. History includes served and cancelled orders, with a compact All/Served/Cancelled select and newest-first pagination. Live orders has Pending, Cooking, and Awaiting cash lanes with counts and empty states. Awaiting cash contains served unpaid orders.
 - Show three equal lanes when the content area is at least 900px wide. Below that, use horizontally scrolling status tabs and one lane at a time. Default to Pending and preserve the selection during realtime changes.
 - Use compact tickets with 16px padding, a prominent table/Takeaway/Unassigned label, short bill ID, creation time, source, payment status, and new-order indicator. Show all items and notes, with an emphasized final MMK total.
 - Each ticket exposes its next step as the primary action. Keep cash collection separately available for unpaid QR orders. Correct destination and Order history belong in an accessible top-right three-dot DropdownMenu.
 - Keep workspace dialogs outside the lanes so realtime movement does not close them. Return focus to the opening control or its lane heading when the ticket moves or leaves.
-- Board updates and keyboard actions stay instant. Use restrained pointer press feedback and short origin-aware popup transitions, respecting reduced motion. Served history retains newest-first pagination.
+- Board updates and keyboard actions stay instant. Use restrained pointer press feedback and short origin-aware popup transitions, respecting reduced motion.
+- Owners cancel pending/cooking orders or record completed full refunds through the ticket's three-dot menu. Keep these controlled dialogs outside lanes. Require a reason and an explicit submit action; cancellation uses destructive styling. Returning a collected payment requires prior cancellation when active work would become underfunded.
+- Cancellation stops preparation without implying a refund. Show collection and recorded-refund badges separately, retaining Served on refunded served orders. Reasons and financial references stay in authorized order history; private guest tracking shows only outcomes.
+- Refund dialogs describe recording money already returned externally, show the full collection and reference, and offer Now or an earlier Asia/Yangon completion time. Preserve failure feedback and the exact command on uncertain retries. Audit history shows completion and recording times separately, with an explicit chronology-review message for refunds preceding late verification.
 
 ## Staff layout and access
 

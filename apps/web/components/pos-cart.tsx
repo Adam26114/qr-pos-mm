@@ -135,9 +135,22 @@ export function PosCart({
           {detail ? (
             <>
               <Badge variant="secondary">{pos.saved}</Badge>
-              <OrderSummary order={detail.order} payment={!!detail.payment} />
+              <OrderSummary
+                order={detail.order}
+                payment={!!detail.payment}
+                money={detail.money}
+                cashOnly={(detail.collections ?? []).every(
+                  (c) => c.method === "cash"
+                )}
+              />
               <OrderActions
-                order={{ ...detail.order, payment: detail.payment }}
+                order={{
+                  ...detail.order,
+                  payment: detail.payment,
+                  collections: detail.collections,
+                  refunds: detail.refunds,
+                  money: detail.money,
+                }}
                 checkout
               />
               <Button

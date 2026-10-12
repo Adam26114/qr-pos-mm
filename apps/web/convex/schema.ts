@@ -33,17 +33,32 @@ export default defineSchema({
     status: v.union(
       v.literal("pending"),
       v.literal("cooking"),
-      v.literal("served")
+      v.literal("served"),
+      v.literal("cancelled")
     ),
     destination: v.union(destination, v.null()),
     cookingAt: v.optional(v.number()),
     servedAt: v.optional(v.number()),
+    terminal: v.optional(v.boolean()),
+    cancellation: v.optional(
+      v.object({
+        reason: v.string(),
+        actorId: v.string(),
+        actorName: v.string(),
+        at: v.number(),
+        requestKey: v.string(),
+      })
+    ),
     // Indexed queue membership for served bills awaiting cash; updated with service/payment atomically.
     cashCollectionPending: v.optional(v.boolean()),
   })
     .index("by_submission", ["storeId", "createdBy", "submissionKey"])
     .index("by_store_status", ["storeId", "status"])
-    .index("by_store_cash_collection", ["storeId", "cashCollectionPending"]),
+    .index("by_store_cash_collection", ["storeId", "cashCollectionPending"])
+    .index("by_store_terminal", ["storeId", "terminal"])
+    .index("by_cancel_request", ["storeId", "cancellation.requestKey"])
+    .index("by_store_status_terminal", ["storeId", "status", "terminal"])
+    .index("by_store_created", ["storeId", "createdAt"]),
   cashPayments: defineTable({
     storeId: v.id("stores"),
     orderId: v.id("orders"),
@@ -51,6 +66,51 @@ export default defineSchema({
     receivedAt: v.number(),
     recordedBy: v.string(),
   }).index("by_order", ["orderId"]),
+  orderCollections: defineTable({
+    storeId: v.id("stores"),
+    orderId: v.id("orders"),
+    amount: v.number(),
+    currency: v.literal("MMK"),
+    method: v.union(v.literal("cash"), v.literal("mmqr")),
+    reference: v.string(),
+    collectedAt: v.number(),
+    timeSource: v.union(
+      v.literal("cash_recorded"),
+      v.literal("provider_completed"),
+      v.literal("verification_fallback")
+    ),
+    recordedAt: v.number(),
+    recordedBy: v.string(),
+    legacyCashPaymentId: v.optional(v.id("cashPayments")),
+  })
+    .index("by_order", ["orderId"])
+    .index("by_legacy_cash", ["legacyCashPaymentId"]),
+  orderRefunds: defineTable({
+    storeId: v.id("stores"),
+    orderId: v.id("orders"),
+    collectionId: v.id("orderCollections"),
+    amount: v.number(),
+    currency: v.literal("MMK"),
+    method: v.union(v.literal("cash"), v.literal("mmqr")),
+    reference: v.string(),
+    collectedAt: v.number(),
+    collectionTimeSource: v.union(
+      v.literal("cash_recorded"),
+      v.literal("provider_completed"),
+      v.literal("verification_fallback")
+    ),
+    completedAt: v.number(),
+    recordedAt: v.number(),
+    actorId: v.string(),
+    actorName: v.string(),
+    reason: v.string(),
+    uncertainChronology: v.boolean(),
+    requestKey: v.string(),
+    payload: v.string(),
+  })
+    .index("by_order", ["orderId"])
+    .index("by_collection", ["collectionId"])
+    .index("by_request", ["storeId", "requestKey"]),
   orderEvents: defineTable({
     storeId: v.id("stores"),
     orderId: v.id("orders"),
@@ -61,8 +121,12 @@ export default defineSchema({
       v.literal("cash_received"),
       v.literal("destination_changed"),
       v.literal("cooking"),
-      v.literal("served")
+      v.literal("served"),
+      v.literal("cancelled"),
+      v.literal("refund_recorded")
     ),
+    refundId: v.optional(v.id("orderRefunds")),
+    reason: v.optional(v.string()),
     previousDestination: v.optional(v.union(destination, v.null())),
     destination: v.optional(destination),
   }).index("by_order", ["orderId"]),

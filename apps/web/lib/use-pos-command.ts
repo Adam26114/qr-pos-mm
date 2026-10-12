@@ -15,6 +15,14 @@ export function usePosCommand() {
   const [pending, setPending] = useState(false)
   const failureMessages = {
     requestFailed: copy.requestFailed,
+    cancelled: pos.orderCancelled,
+    cannotCancel: pos.cannotCancel,
+    invalidCancel: pos.invalidCancel,
+    invalidRefund: pos.financialInvalid,
+    refundDate: pos.invalidRefundDate,
+    refundDuplicate: pos.refundDuplicate,
+    refundNeedsCancel: pos.refundRequiredCancel,
+    commandChanged: pos.keyReused,
     disconnected: copy.disconnected,
     expired: pos.expired,
     invalidOrder: pos.invalidOrder,
@@ -39,6 +47,15 @@ export function usePosCommand() {
   }
   function errorKey(error: unknown): FailureKey {
     const codes: Record<string, FailureKey> = {
+      ORDER_CANCELLED: "cancelled",
+      ORDER_NOT_CANCELLABLE: "cannotCancel",
+      INVALID_CANCELLATION: "invalidCancel",
+      INVALID_REFUND: "invalidRefund",
+      INVALID_COLLECTION: "invalidRefund",
+      INVALID_REFUND_DATE: "refundDate",
+      ALREADY_REFUNDED: "refundDuplicate",
+      CANCEL_BEFORE_REFUND: "refundNeedsCancel",
+      COMMAND_KEY_REUSED: "commandChanged",
       STORE_ACCESS_EXPIRED: "expired",
       INVALID_ORDER: "invalidOrder",
       PRICE_CHANGED: "priceChanged",

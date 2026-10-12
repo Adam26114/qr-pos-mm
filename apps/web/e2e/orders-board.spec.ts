@@ -225,9 +225,9 @@ test("order board preserves live dialogs, responsive status selection, and pagin
       () => document.documentElement.scrollWidth <= innerWidth
     )
   ).toBe(true)
-  await page.getByRole("tab", { name: "Served history", exact: true }).click()
+  await page.getByRole("tab", { name: "History", exact: true }).click()
   const served = page.getByRole("region", {
-    name: "Served history",
+    name: "History",
     exact: true,
   })
   await expect(served.getByRole("article")).toHaveCount(20)

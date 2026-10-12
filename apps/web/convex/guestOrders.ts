@@ -1,3 +1,4 @@
+import { orderMoney } from "./lib/order_money"
 import { ConvexError, v } from "convex/values"
 import { mutation, query } from "./_generated/server"
 import { orderLineInput, snapshotOrderLines } from "./lib/order_lines"
@@ -96,10 +97,7 @@ export const track = query({
     if (!receipt || !order || order.storeId !== receipt.storeId) return null
     const store = await ctx.db.get(receipt.storeId)
     if (!store) return null
-    const payment = await ctx.db
-      .query("cashPayments")
-      .withIndex("by_order", (q) => q.eq("orderId", order._id))
-      .unique()
+    const { money, collections } = await orderMoney(ctx, order)
     return {
       store: { _id: store._id, name: store.name },
       order: {
@@ -115,7 +113,13 @@ export const track = query({
             ? { kind: "table" as const, number: order.destination.number }
             : null,
       },
-      paid: !!payment,
+      paid: money.collected >= order.total,
+      money: {
+        collected: money.collected,
+        refunded: money.refunded,
+        due: money.due,
+      },
+      cashOnly: collections.every((collection) => collection.method === "cash"),
     }
   },
 })

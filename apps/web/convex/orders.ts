@@ -2,14 +2,18 @@ import { ConvexError, v } from "convex/values"
 import { paginationOptsValidator } from "convex/server"
 import {
   mutation,
+  internalMutation,
   query,
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server"
+import { internal } from "./_generated/api"
+import { orderMoney, migrateCash } from "./lib/order_money"
 import type { Id } from "./_generated/dataModel"
 import {
   assertAcceptingOrders,
   requireStoreMembership,
+  requireStoreOwner,
 } from "./lib/store_access"
 import { destinationInput } from "./lib/order_values"
 import { orderLineInput, snapshotOrderLines } from "./lib/order_lines"
@@ -28,10 +32,8 @@ async function accessOrder(
   return { order, user }
 }
 async function paymentFor(ctx: QueryCtx, orderId: Id<"orders">) {
-  return await ctx.db
-    .query("cashPayments")
-    .withIndex("by_order", (q) => q.eq("orderId", orderId))
-    .unique()
+  const order = await ctx.db.get(orderId)
+  return order ? (await orderMoney(ctx, order)).payment : null
 }
 async function event(
   ctx: MutationCtx,
@@ -144,7 +146,7 @@ export const queue = query({
     const queue = await Promise.all(
       orders.map(async (order) => ({
         ...order,
-        payment: await paymentFor(ctx, order._id),
+        ...(await orderMoney(ctx, order)),
       }))
     )
     return queue.filter((order) => order.status !== "served" || !order.payment)
@@ -180,7 +182,7 @@ export const detail = query({
     const { order } = await accessOrder(ctx, storeId, orderId)
     return {
       order,
-      payment: await paymentFor(ctx, orderId),
+      ...(await orderMoney(ctx, order)),
       events: await ctx.db
         .query("orderEvents")
         .withIndex("by_order", (q) => q.eq("orderId", orderId))
@@ -189,22 +191,70 @@ export const detail = query({
   },
 })
 export const history = query({
-  args: { storeId: v.id("stores"), paginationOpts: paginationOptsValidator },
-  handler: async (ctx, { storeId, paginationOpts }) => {
+  args: {
+    storeId: v.id("stores"),
+    status: v.optional(v.union(v.literal("served"), v.literal("cancelled"))),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, { storeId, status, paginationOpts }) => {
     await requireStoreMembership(ctx, storeId)
-    const result = await ctx.db
-      .query("orders")
-      .withIndex("by_store_status", (q) =>
-        q.eq("storeId", storeId).eq("status", "served")
-      )
+    // An indexed legacy probe keeps All History available throughout backfill.
+    const legacy =
+      !status &&
+      (await ctx.db
+        .query("orders")
+        .withIndex("by_store_status_terminal", (q) =>
+          q
+            .eq("storeId", storeId)
+            .eq("status", "served")
+            .eq("terminal", undefined)
+        )
+        .first())
+    const readerHint = paginationOpts.cursor ?? paginationOpts.endCursor
+    const compatibility =
+      readerHint?.startsWith("legacy|") || (!readerHint && !!legacy)
+    const cursorMode = status ?? (compatibility ? "legacy" : "terminal")
+    const unwrap = (value: string | null | undefined) =>
+      value?.startsWith(`${cursorMode}|`)
+        ? value.slice(cursorMode.length + 1)
+        : value
+    const cursor = unwrap(paginationOpts.cursor) ?? null
+    const endCursor = unwrap(paginationOpts.endCursor)
+    const history = status
+      ? ctx.db
+          .query("orders")
+          .withIndex("by_store_status", (q) =>
+            q.eq("storeId", storeId).eq("status", status)
+          )
+      : compatibility
+        ? ctx.db
+            .query("orders")
+            .withIndex("by_store_created", (q) => q.eq("storeId", storeId))
+            .filter((q) =>
+              q.or(
+                q.eq(q.field("status"), "served"),
+                q.eq(q.field("status"), "cancelled")
+              )
+            )
+        : ctx.db
+            .query("orders")
+            .withIndex("by_store_terminal", (q) =>
+              q.eq("storeId", storeId).eq("terminal", true)
+            )
+    const result = await history
       .order("desc")
-      .paginate(paginationOpts)
+      .paginate({ ...paginationOpts, cursor, endCursor })
     return {
       ...result,
+      // Preserve each paginator's index across the upgrade, including split cursors.
+      continueCursor: `${cursorMode}|${result.continueCursor}`,
+      ...(result.splitCursor
+        ? { splitCursor: `${cursorMode}|${result.splitCursor}` }
+        : {}),
       page: await Promise.all(
         result.page.map(async (order) => ({
           ...order,
-          payment: await paymentFor(ctx, order._id),
+          ...(await orderMoney(ctx, order)),
         }))
       ),
     }
@@ -214,12 +264,19 @@ export const recordCash = mutation({
   args: command,
   handler: async (ctx, { storeId, orderId }) => {
     const { order, user } = await accessOrder(ctx, storeId, orderId)
+    if (order.status === "cancelled") throw new ConvexError("ORDER_CANCELLED")
     if (await paymentFor(ctx, orderId)) return
-    await ctx.db.insert("cashPayments", {
+    const at = Date.now()
+    await ctx.db.insert("orderCollections", {
       storeId,
       orderId,
       amount: order.total,
-      receivedAt: Date.now(),
+      currency: "MMK",
+      method: "cash",
+      reference: `cash:${orderId}`,
+      collectedAt: at,
+      timeSource: "cash_recorded",
+      recordedAt: at,
       recordedBy: user._id,
     })
     await ctx.db.patch(orderId, { cashCollectionPending: false })
@@ -230,6 +287,7 @@ export const assignDestination = mutation({
   args: { ...command, destination: destinationInput },
   handler: async (ctx, { storeId, orderId, destination: input }) => {
     const { order, user } = await accessOrder(ctx, storeId, orderId)
+    if (order.status === "cancelled") throw new ConvexError("ORDER_CANCELLED")
     if (order.source === "counter" && !(await paymentFor(ctx, orderId)))
       throw new ConvexError("PAYMENT_REQUIRED")
     if (order.source === "qr" && input.kind !== "table")
@@ -270,6 +328,7 @@ export const startCooking = mutation({
   args: command,
   handler: async (ctx, { storeId, orderId }) => {
     const { order, user } = await accessOrder(ctx, storeId, orderId)
+    if (order.status === "cancelled") throw new ConvexError("ORDER_CANCELLED")
     if (order.status !== "pending") return
     if (order.source === "counter" && !(await paymentFor(ctx, orderId)))
       throw new ConvexError("PAYMENT_REQUIRED")
@@ -282,13 +341,205 @@ export const markServed = mutation({
   args: command,
   handler: async (ctx, { storeId, orderId }) => {
     const { order, user } = await accessOrder(ctx, storeId, orderId)
+    if (order.status === "cancelled") throw new ConvexError("ORDER_CANCELLED")
     if (order.status === "served") return
     if (order.status !== "cooking") throw new ConvexError("ORDER_NOT_COOKING")
     await ctx.db.patch(orderId, {
       status: "served",
+      terminal: true,
       servedAt: Date.now(),
       cashCollectionPending: !(await paymentFor(ctx, orderId)),
     })
     await event(ctx, storeId, orderId, user._id, user.name, "served")
+  },
+})
+
+export const cancel = mutation({
+  args: { ...command, requestKey: v.string(), reason: v.string() },
+  handler: async (ctx, args) => {
+    const { user } = await requireStoreOwner(ctx, args.storeId)
+    const { order } = await accessOrder(ctx, args.storeId, args.orderId)
+    const previous = await ctx.db
+      .query("orders")
+      .withIndex("by_cancel_request", (q) =>
+        q
+          .eq("storeId", args.storeId)
+          .eq("cancellation.requestKey", args.requestKey)
+      )
+      .unique()
+    if (previous) {
+      if (
+        previous._id !== args.orderId ||
+        previous.cancellation?.reason !== args.reason
+      )
+        throw new ConvexError("COMMAND_KEY_REUSED")
+      return previous._id
+    }
+    if (order.status !== "pending" && order.status !== "cooking")
+      throw new ConvexError("ORDER_NOT_CANCELLABLE")
+    if (
+      !args.reason.trim() ||
+      args.reason.length > 2000 ||
+      args.requestKey.length < 8 ||
+      args.requestKey.length > 100
+    )
+      throw new ConvexError("INVALID_CANCELLATION")
+    const at = Date.now()
+    await ctx.db.patch(order._id, {
+      status: "cancelled",
+      terminal: true,
+      cashCollectionPending: false,
+      cancellation: {
+        reason: args.reason,
+        requestKey: args.requestKey,
+        actorId: user._id,
+        actorName: user.name,
+        at,
+      },
+    })
+    await ctx.db.insert("orderEvents", {
+      storeId: args.storeId,
+      orderId: order._id,
+      actorId: user._id,
+      actorName: user.name,
+      at,
+      kind: "cancelled",
+      reason: args.reason,
+    })
+    return order._id
+  },
+})
+
+export const recordRefund = mutation({
+  args: {
+    ...command,
+    collectionId: v.union(v.id("orderCollections"), v.id("cashPayments")),
+    requestKey: v.string(),
+    reason: v.string(),
+    completedAt: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const { user } = await requireStoreOwner(ctx, args.storeId)
+    const { order } = await accessOrder(ctx, args.storeId, args.orderId)
+    const payload = JSON.stringify({
+      orderId: args.orderId,
+      collectionId: args.collectionId,
+      reason: args.reason,
+      completedAt: args.completedAt ?? null,
+    })
+    const previous = await ctx.db
+      .query("orderRefunds")
+      .withIndex("by_request", (q) =>
+        q.eq("storeId", args.storeId).eq("requestKey", args.requestKey)
+      )
+      .unique()
+    if (previous) {
+      if (previous.payload !== payload)
+        throw new ConvexError("COMMAND_KEY_REUSED")
+      return previous._id
+    }
+    if (
+      !args.reason.trim() ||
+      args.reason.length > 2000 ||
+      args.requestKey.length < 8 ||
+      args.requestKey.length > 100
+    )
+      throw new ConvexError("INVALID_REFUND")
+    const supplied = await ctx.db.get(args.collectionId)
+    if (
+      !supplied ||
+      supplied.storeId !== args.storeId ||
+      supplied.orderId !== order._id
+    )
+      throw new ConvexError("INVALID_COLLECTION")
+    const collectionId =
+      "receivedAt" in supplied ? await migrateCash(ctx, supplied) : supplied._id
+    const collection = await ctx.db.get(collectionId)
+    if (!collection) throw new ConvexError("INVALID_COLLECTION")
+    const duplicate = await ctx.db
+      .query("orderRefunds")
+      .withIndex("by_collection", (q) => q.eq("collectionId", collectionId))
+      .unique()
+    if (duplicate) throw new ConvexError("ALREADY_REFUNDED")
+    const at = Date.now()
+    const completedAt = args.completedAt ?? at
+    if (
+      !Number.isSafeInteger(completedAt) ||
+      completedAt < 0 ||
+      completedAt > at ||
+      (collection.timeSource !== "verification_fallback" &&
+        completedAt < collection.collectedAt)
+    )
+      throw new ConvexError("INVALID_REFUND_DATE")
+    const money = await orderMoney(ctx, order)
+    if (
+      (order.status === "pending" || order.status === "cooking") &&
+      money.money.retained - collection.amount < order.total
+    )
+      throw new ConvexError("CANCEL_BEFORE_REFUND")
+    const refundId = await ctx.db.insert("orderRefunds", {
+      storeId: args.storeId,
+      orderId: order._id,
+      collectionId,
+      amount: collection.amount,
+      method: collection.method,
+      reference: collection.reference,
+      currency: collection.currency,
+      collectedAt: collection.collectedAt,
+      collectionTimeSource: collection.timeSource,
+      completedAt,
+      recordedAt: at,
+      actorId: user._id,
+      actorName: user.name,
+      reason: args.reason,
+      uncertainChronology: completedAt < collection.collectedAt,
+      requestKey: args.requestKey,
+      payload,
+    })
+    await ctx.db.insert("orderEvents", {
+      storeId: args.storeId,
+      orderId: order._id,
+      actorId: user._id,
+      actorName: user.name,
+      at,
+      kind: "refund_recorded",
+      refundId,
+    })
+    return refundId
+  },
+})
+
+// Bounded, restartable upgrade. CLI invocation is internal; no browser migration endpoint.
+export const migrateRecords = internalMutation({
+  args: {
+    phase: v.union(v.literal("cash"), v.literal("orders")),
+    cursor: v.optional(v.string()),
+  },
+  handler: async (ctx, { phase, cursor }) => {
+    const page =
+      phase === "cash"
+        ? await ctx.db
+            .query("cashPayments")
+            .paginate({ cursor: cursor ?? null, numItems: 100 })
+        : await ctx.db
+            .query("orders")
+            .paginate({ cursor: cursor ?? null, numItems: 100 })
+    for (const record of page.page) {
+      if ("receivedAt" in record) await migrateCash(ctx, record)
+      else
+        await ctx.db.patch(record._id, {
+          terminal: record.status === "served" || record.status === "cancelled",
+        })
+    }
+    if (!page.isDone)
+      await ctx.scheduler.runAfter(0, internal.orders.migrateRecords, {
+        phase,
+        cursor: page.continueCursor,
+      })
+    else if (phase === "cash")
+      await ctx.scheduler.runAfter(0, internal.orders.migrateRecords, {
+        phase: "orders",
+      })
+    return { isDone: page.isDone, nextCursor: page.continueCursor }
   },
 })
