@@ -183,9 +183,7 @@ test("staff prepares seated cash, corrects its table, collects after serving and
       guest.getByText("Cash received", { exact: true })
     ).toBeVisible()
     await expect(guest.getByText("Served", { exact: true })).toBeVisible()
-    await staff
-      .getByRole("tab", { name: "History", exact: true })
-      .click()
+    await staff.getByRole("tab", { name: "History", exact: true }).click()
     await staff.getByRole("button", { name: /^Order actions:/ }).click()
     await staff
       .getByRole("menuitem", { name: "Order history", exact: true })
@@ -197,7 +195,9 @@ test("staff prepares seated cash, corrects its table, collects after serving and
       "Served",
       "Cash received",
     ])
-      await expect(history.getByText(event, { exact: true })).toHaveCount(1)
+      await expect(
+        history.getByRole("listitem").getByText(event, { exact: true })
+      ).toHaveCount(1)
     await expect(
       history.getByText("Table 4 → Table 7", { exact: true })
     ).toBeVisible()

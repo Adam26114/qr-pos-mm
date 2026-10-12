@@ -8,6 +8,7 @@ import {
   type QueryCtx,
 } from "./_generated/server"
 import { internal } from "./_generated/api"
+import { reportCollection, reportRefund, reportUnpaid } from "./lib/reporting"
 import { orderMoney, migrateCash } from "./lib/order_money"
 import type { Id } from "./_generated/dataModel"
 import {
@@ -88,7 +89,7 @@ export const createCounter = mutation({
       args.lines,
       args.note
     )
-    return await ctx.db.insert("orders", {
+    const orderId = await ctx.db.insert("orders", {
       storeId: args.storeId,
       createdBy: user._id,
       submissionKey: args.submissionKey,
@@ -101,6 +102,8 @@ export const createCounter = mutation({
       status: "pending",
       destination: null,
     })
+    await reportUnpaid(ctx, orderId, total)
+    return orderId
   },
 })
 export const submission = query({
@@ -267,7 +270,7 @@ export const recordCash = mutation({
     if (order.status === "cancelled") throw new ConvexError("ORDER_CANCELLED")
     if (await paymentFor(ctx, orderId)) return
     const at = Date.now()
-    await ctx.db.insert("orderCollections", {
+    const collectionId = await ctx.db.insert("orderCollections", {
       storeId,
       orderId,
       amount: order.total,
@@ -279,6 +282,8 @@ export const recordCash = mutation({
       recordedAt: at,
       recordedBy: user._id,
     })
+    await reportCollection(ctx, collectionId)
+    await reportUnpaid(ctx, orderId, 0)
     await ctx.db.patch(orderId, { cashCollectionPending: false })
     await event(ctx, storeId, orderId, user._id, user.name, "cash_received")
   },
@@ -397,6 +402,7 @@ export const cancel = mutation({
         at,
       },
     })
+    await reportUnpaid(ctx, order._id, 0)
     await ctx.db.insert("orderEvents", {
       storeId: args.storeId,
       orderId: order._id,
@@ -496,6 +502,9 @@ export const recordRefund = mutation({
       requestKey: args.requestKey,
       payload,
     })
+    await reportCollection(ctx, collectionId)
+    await reportRefund(ctx, refundId)
+    await reportUnpaid(ctx, order._id, 0)
     await ctx.db.insert("orderEvents", {
       storeId: args.storeId,
       orderId: order._id,

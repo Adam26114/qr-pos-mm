@@ -1,5 +1,6 @@
 import type { Doc } from "../_generated/dataModel"
 import type { MutationCtx, QueryCtx } from "../_generated/server"
+import { reportCollection } from "./reporting"
 
 function legacyCollection(payment: Doc<"cashPayments">) {
   return {
@@ -62,11 +63,16 @@ export async function migrateCash(
       q.eq("legacyCashPaymentId", payment._id)
     )
     .unique()
-  if (existing) return existing._id
+  if (existing) {
+    await reportCollection(ctx, existing._id)
+    return existing._id
+  }
   const { _id, _creationTime, receivedAt, ...fields } =
     legacyCollection(payment)
-  return ctx.db.insert("orderCollections", {
+  const id = await ctx.db.insert("orderCollections", {
     ...fields,
     legacyCashPaymentId: _id,
   })
+  await reportCollection(ctx, id)
+  return id
 }

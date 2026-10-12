@@ -17,6 +17,7 @@ import { useCopy } from "./language-switcher"
 import { MenuManager } from "./menu-manager"
 import { StaffManager } from "./staff-manager"
 import { WorkspaceSubscription } from "./workspace-subscription"
+import { WorkspaceReports } from "./workspace-reports"
 
 export function WorkspaceOverview() {
   const { workspace } = useWorkspace()
@@ -60,6 +61,7 @@ export function WorkspaceOverview() {
           )}
         </div>
       </div>
+      {owner && storeId && <WorkspaceReports storeId={storeId} />}
       {loading ? (
         <LoadingState label={copy.loading} />
       ) : (

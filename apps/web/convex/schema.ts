@@ -51,6 +51,8 @@ export default defineSchema({
     ),
     // Indexed queue membership for served bills awaiting cash; updated with service/payment atomically.
     cashCollectionPending: v.optional(v.boolean()),
+    reportingDue: v.optional(v.number()),
+    outstanding: v.optional(v.boolean()),
   })
     .index("by_submission", ["storeId", "createdBy", "submissionKey"])
     .index("by_store_status", ["storeId", "status"])
@@ -58,14 +60,17 @@ export default defineSchema({
     .index("by_store_terminal", ["storeId", "terminal"])
     .index("by_cancel_request", ["storeId", "cancellation.requestKey"])
     .index("by_store_status_terminal", ["storeId", "status", "terminal"])
-    .index("by_store_created", ["storeId", "createdAt"]),
+    .index("by_store_created", ["storeId", "createdAt"])
+    .index("by_store_outstanding", ["storeId", "outstanding", "createdAt"]),
   cashPayments: defineTable({
     storeId: v.id("stores"),
     orderId: v.id("orders"),
     amount: v.number(),
     receivedAt: v.number(),
     recordedBy: v.string(),
-  }).index("by_order", ["orderId"]),
+  })
+    .index("by_order", ["orderId"])
+    .index("by_store_received", ["storeId", "receivedAt"]),
   orderCollections: defineTable({
     storeId: v.id("stores"),
     orderId: v.id("orders"),
@@ -82,9 +87,11 @@ export default defineSchema({
     recordedAt: v.number(),
     recordedBy: v.string(),
     legacyCashPaymentId: v.optional(v.id("cashPayments")),
+    reportingApplied: v.optional(v.boolean()),
   })
     .index("by_order", ["orderId"])
-    .index("by_legacy_cash", ["legacyCashPaymentId"]),
+    .index("by_legacy_cash", ["legacyCashPaymentId"])
+    .index("by_store_collected", ["storeId", "collectedAt"]),
   orderRefunds: defineTable({
     storeId: v.id("stores"),
     orderId: v.id("orders"),
@@ -105,12 +112,14 @@ export default defineSchema({
     actorName: v.string(),
     reason: v.string(),
     uncertainChronology: v.boolean(),
+    reportingApplied: v.optional(v.boolean()),
     requestKey: v.string(),
     payload: v.string(),
   })
     .index("by_order", ["orderId"])
     .index("by_collection", ["collectionId"])
-    .index("by_request", ["storeId", "requestKey"]),
+    .index("by_request", ["storeId", "requestKey"])
+    .index("by_store_completed", ["storeId", "completedAt"]),
   orderEvents: defineTable({
     storeId: v.id("stores"),
     orderId: v.id("orders"),
@@ -130,6 +139,18 @@ export default defineSchema({
     previousDestination: v.optional(v.union(destination, v.null())),
     destination: v.optional(destination),
   }).index("by_order", ["orderId"]),
+  reportStates: defineTable({
+    storeId: v.id("stores"),
+    ready: v.boolean(),
+    unpaidAmount: v.number(),
+    unpaidCount: v.number(),
+  }).index("by_store", ["storeId"]),
+  reportDays: defineTable({
+    storeId: v.id("stores"),
+    day: v.string(),
+    collected: v.number(),
+    refunded: v.number(),
+  }).index("by_store_day", ["storeId", "day"]),
   stores: defineTable({
     name: v.string(),
     ownerId: v.string(),

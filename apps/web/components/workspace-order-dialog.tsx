@@ -13,6 +13,9 @@ import { DestinationTiles } from "@workspace/ui/composed/destination-tiles"
 import { SubmitButton } from "@workspace/ui/composed/submit-button"
 import { Feedback } from "@workspace/ui/composed/feedback"
 import { LoadingState } from "@workspace/ui/composed/loading-state"
+import { OrderTicket } from "@workspace/ui/composed/order-ticket"
+import { Badge } from "@workspace/ui/components/badge"
+import { OrderPaymentBadges } from "./order-payment-badges"
 import { useCopy } from "./language-switcher"
 import { usePosCopy } from "@/lib/pos-copy"
 import { usePosCommand } from "@/lib/use-pos-command"
@@ -166,9 +169,42 @@ export function WorkspaceOrderDialog({
           <LoadingState label={copy.loading} />
         ) : (
           <>
-            <p className="text-sm">
-              {pos.created}: {date(detail.order.createdAt)}
-            </p>
+            <OrderTicket
+              id={`order-history-${detail.order._id}`}
+              label={`${pos.order} · ${detail.order._id.slice(-6).toUpperCase()}`}
+              destination={orderDestination(detail.order.destination, pos)}
+              metadata={
+                <>
+                  {pos.created}: {date(detail.order.createdAt)} ·{" "}
+                  {detail.order.source === "counter" ? pos.counterOrder : "QR"}
+                </>
+              }
+              badges={
+                <>
+                  <Badge variant="outline">{pos[detail.order.status]}</Badge>
+                  <OrderPaymentBadges
+                    paid={detail.money.collected >= detail.order.total}
+                    refunded={detail.money.refunded}
+                    cashOnly={detail.collections.every(
+                      (collection) => collection.method === "cash"
+                    )}
+                    cancelled={detail.order.status === "cancelled"}
+                  />
+                </>
+              }
+              lines={detail.order.lines.map((line) => ({
+                key: line.itemId,
+                name: line.name,
+                quantity: line.quantity,
+                amount: formatMMK(line.quantity * line.unitPrice),
+              }))}
+              note={detail.order.note}
+              noteLabel={pos.note}
+              total={formatMMK(detail.order.total)}
+              totalLabel={pos.total}
+              tools={null}
+              actions={null}
+            />
             {detail.collections.map((collection) => (
               <div
                 key={collection._id}
@@ -183,6 +219,9 @@ export function WorkspaceOrderDialog({
                 </p>
                 <p>
                   {pos.collectionTime}: {date(collection.collectedAt)}
+                </p>
+                <p>
+                  {pos.recordedAt}: {date(collection.recordedAt)}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {pos[collection.timeSource]}

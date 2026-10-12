@@ -49,6 +49,15 @@ Small photo cards                     Items, quantities, note, total, checkout
 - Keep unavailable signature items visible with their availability status and disabled cart action. Live changes, filtering, and language changes preserve cart quantities and notes.
 - Manual ordering, popularity ranking, and automated recommendations belong to future work.
 
+## Overview revenue reports
+
+- Owners see a compact Revenue reports section directly below the Overview toolbar. Keep the existing menu/team metrics and subscription summary below it; staff retain their operational Overview without financial queries.
+- Use Day/Month line tabs, a labeled date/month input and a Today/This month reset. Default to the current day using server dates in Asia/Yangon. Refresh automatic current periods at Yangon midnight and on foreground/reconnect; preserve explicitly selected historical periods.
+- Show separate Collected, Refunded, Net collected and Unpaid now metric cards. Collections and completed refunds belong to their financial event periods. Net may be negative. Unpaid now is the current outstanding amount/count across all dates, independent of the selected period.
+- Collections, Refunds and Unpaid tables use shadcn primitives, contained horizontal scrolling and server-side Load more pagination. Financial rows are newest-first; unpaid bills are oldest-first. Date/period and table changes are instant.
+- Each bill opens a controlled read-only order detail with the full submitted bill, notes, fulfillment/payment badges and existing financial/audit history. Keep the dialog outside the tables so live removals do not close it. Restore focus to the row trigger or the table heading when its row leaves.
+- Show preparation feedback while reporting backfill is incomplete instead of partial totals. Keep existing disconnected feedback visible; report query results remain in Convex subscriptions.
+
 ## Orders layout
 
 - Keep the Orders title and compact sound toggle in one toolbar. Put new-order notifications and Mark all seen directly below it.

@@ -136,7 +136,9 @@ test("order board preserves live dialogs, responsive status selection, and pagin
     )
   ).toBe("0s")
   await client.mutation(api.orders.startCooking, { storeId, orderId: pending })
-  await expect(history.getByText("Cooking", { exact: true })).toBeVisible()
+  await expect(
+    history.getByRole("article").getByText("Cooking", { exact: true })
+  ).toBeVisible()
   await history.getByRole("button", { name: "Close", exact: true }).click()
   await expect(page.locator("#orders-lane-pending")).toBeFocused()
   await expect(

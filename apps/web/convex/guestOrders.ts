@@ -1,3 +1,4 @@
+import { reportUnpaid } from "./lib/reporting"
 import { orderMoney } from "./lib/order_money"
 import { ConvexError, v } from "convex/values"
 import { mutation, query } from "./_generated/server"
@@ -75,6 +76,7 @@ export const submit = mutation({
       status: "pending",
       destination: { kind: "table", tableId: table._id, number: table.number },
     })
+    await reportUnpaid(ctx, orderId, total)
     await ctx.db.insert("guestReceipts", {
       storeId: args.storeId,
       tokenHash,

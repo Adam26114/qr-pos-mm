@@ -1,5 +1,6 @@
 import { internalMutation, mutation, query } from "./_generated/server"
 import { internal } from "./_generated/api"
+import { reportState } from "./lib/reporting"
 import { ConvexError, v } from "convex/values"
 import { authComponent } from "./auth"
 import {
@@ -34,6 +35,7 @@ export const create = mutation({
       trialStartedAt: now,
       trialEndsAt: now + 14 * 24 * 60 * 60 * 1000,
     })
+    await reportState(ctx, storeId, true)
     await ctx.db.insert("memberships", {
       userId: user._id,
       storeId,

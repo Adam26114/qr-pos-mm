@@ -93,6 +93,16 @@ A refund completion that preceded a collection's late verification timestamp whe
 Customer order payments received by a store during a reporting period. Unpaid orders are shown separately.
 _Avoid_: Orders placed, subscription revenue.
 
+**Reporting Period**:
+A selected calendar day or month in Asia/Yangon. Collection totals use collection event time, and refund totals use external completion time, each in a half-open period. Recording time remains separate audit evidence.
+
+**Net Collected**:
+Money collected minus completed refunds in the selected reporting period. It may be negative when an earlier collection is refunded in a later period.
+_Avoid_: Profit, earned revenue.
+
+**Unpaid Now**:
+The current amount and count of non-cancelled bills still awaiting payment across all dates, including served seated cash orders. It is not a historical balance for the selected reporting period.
+
 **Subscription**:
 The owner's monthly paid access to the platform's service for their store.
 _Avoid_: Customer order.
