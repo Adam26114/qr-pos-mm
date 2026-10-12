@@ -19,6 +19,7 @@ import type * as lib_payment_access from "../lib/payment_access.js";
 import type * as lib_payment_adapter from "../lib/payment_adapter.js";
 import type * as lib_payment_config from "../lib/payment_config.js";
 import type * as lib_payment_protocol from "../lib/payment_protocol.js";
+import type * as lib_payment_review from "../lib/payment_review.js";
 import type * as lib_report_period from "../lib/report_period.js";
 import type * as lib_reporting from "../lib/reporting.js";
 import type * as lib_store_access from "../lib/store_access.js";
@@ -51,6 +52,7 @@ declare const fullApi: ApiFromModules<{
   "lib/payment_adapter": typeof lib_payment_adapter;
   "lib/payment_config": typeof lib_payment_config;
   "lib/payment_protocol": typeof lib_payment_protocol;
+  "lib/payment_review": typeof lib_payment_review;
   "lib/report_period": typeof lib_report_period;
   "lib/reporting": typeof lib_reporting;
   "lib/store_access": typeof lib_store_access;
