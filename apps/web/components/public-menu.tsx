@@ -68,15 +68,31 @@ function GuestCatalog({
   const [lines, setLines] = useState<CartLine[]>([])
   const [note, setNote] = useState("")
   const [review, setReview] = useState<GuestCommand["lines"] | null>(null)
+  const activeCategory = menu.categories.some((item) => item._id === category)
+    ? category
+    : "all"
   const visible = menu.items.filter(
     (item) =>
-      (category === "all" ||
-        !menu.categories.some((c) => c._id === category) ||
-        item.categoryId === category) &&
+      (activeCategory === "all" || item.categoryId === activeCategory) &&
       `${item.name} ${item.description}`
         .toLocaleLowerCase()
         .includes(search.toLocaleLowerCase())
   )
+  // Derive sections in category order; filtering retains item creation order.
+  const sections = menu.categories
+    .map((category) => ({
+      id: String(category._id),
+      name: category.name,
+      items: visible.filter((item) => item.categoryId === category._id),
+    }))
+    .filter((section) => section.items.length > 0)
+  const signatures = visible.filter((item) => item.signature)
+  if (activeCategory === "all" && signatures.length)
+    sections.unshift({
+      id: "signature",
+      name: copy.signatureItems,
+      items: signatures,
+    })
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
       <section aria-label={copy.menuPreview} className="min-w-0 space-y-5">
@@ -99,70 +115,106 @@ function GuestCatalog({
           selectedCategory={category}
           onCategoryChange={setCategory}
         />
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3">
-          {visible.map((item) => (
-            <CatalogCard
-              key={item._id}
-              title={item.name}
-              description={item.description}
-              price={formatMMK(item.price)}
-              image={
-                item.photoUrl ? (
-                  <Image
-                    src={item.photoUrl}
-                    alt={item.name}
-                    fill
-                    unoptimized
-                    sizes="(max-width: 640px) 50vw, 300px"
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
-                    {pos.noPhoto}
-                  </div>
-                )
-              }
-              status={
-                <Badge variant={item.available ? "secondary" : "outline"}>
-                  {item.available ? copy.availableItem : copy.unavailableItem}
-                </Badge>
-              }
-              actions={
-                <Button
-                  className="w-full"
-                  size="sm"
-                  disabled={
-                    !item.available ||
-                    !connected ||
-                    !!recovery.attempt ||
-                    recovery.broken ||
-                    !!review ||
-                    (lines.length >= 100 &&
-                      !lines.some((line) => line.itemId === item._id)) ||
-                    lines.some(
-                      (line) => line.itemId === item._id && line.quantity >= 99
-                    )
-                  }
-                  aria-label={`${pos.addToCart}: ${item.name}`}
-                  onClick={() =>
-                    setLines((current) =>
-                      current.some((line) => line.itemId === item._id)
-                        ? current.map((line) =>
-                            line.itemId === item._id
-                              ? {
-                                  ...line,
-                                  quantity: Math.min(99, line.quantity + 1),
-                                }
-                              : line
+        <div className="space-y-6">
+          {sections.map((section) => (
+            <section
+              key={section.id}
+              aria-labelledby={`menu-section-${section.id}`}
+              className="space-y-3"
+            >
+              <h3
+                id={`menu-section-${section.id}`}
+                className="font-heading text-lg font-semibold [overflow-wrap:anywhere]"
+              >
+                {section.name}
+              </h3>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3">
+                {section.items.map((item) => (
+                  <CatalogCard
+                    key={item._id}
+                    headingLevel={4}
+                    title={item.name}
+                    description={item.description}
+                    price={formatMMK(item.price)}
+                    image={
+                      item.photoUrl ? (
+                        <Image
+                          src={item.photoUrl}
+                          alt={item.name}
+                          fill
+                          unoptimized
+                          sizes="(max-width: 640px) 50vw, 300px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+                          {pos.noPhoto}
+                        </div>
+                      )
+                    }
+                    status={
+                      <div className="flex flex-wrap gap-1.5">
+                        {item.signature && (
+                          <Badge
+                            variant="outline"
+                            className="max-w-full border-primary/30 bg-primary/10 whitespace-normal"
+                          >
+                            {copy.signature}
+                          </Badge>
+                        )}
+                        <Badge
+                          variant={item.available ? "secondary" : "outline"}
+                          className="max-w-full whitespace-normal"
+                        >
+                          {item.available
+                            ? copy.availableItem
+                            : copy.unavailableItem}
+                        </Badge>
+                      </div>
+                    }
+                    actions={
+                      <Button
+                        className="w-full"
+                        size="sm"
+                        disabled={
+                          !item.available ||
+                          !connected ||
+                          !!recovery.attempt ||
+                          recovery.broken ||
+                          !!review ||
+                          (lines.length >= 100 &&
+                            !lines.some((line) => line.itemId === item._id)) ||
+                          lines.some(
+                            (line) =>
+                              line.itemId === item._id && line.quantity >= 99
                           )
-                        : [...current, { itemId: item._id, quantity: 1 }]
-                    )
-                  }
-                >
-                  {pos.addToCart}
-                </Button>
-              }
-            />
+                        }
+                        aria-label={`${pos.addToCart}: ${item.name}`}
+                        onClick={() =>
+                          setLines((current) =>
+                            current.some((line) => line.itemId === item._id)
+                              ? current.map((line) =>
+                                  line.itemId === item._id
+                                    ? {
+                                        ...line,
+                                        quantity: Math.min(
+                                          99,
+                                          line.quantity + 1
+                                        ),
+                                      }
+                                    : line
+                                )
+                              : [...current, { itemId: item._id, quantity: 1 }]
+                          )
+                        }
+                      >
+                        {pos.addToCart}
+                      </Button>
+                    }
+                  />
+                ))}
+              </div>
+            </section>
           ))}
         </div>
         {!visible.length && (

@@ -28,6 +28,7 @@ test("owner maintains verbatim menu content, a final whole-MMK price and availab
         description: "နို့ပါသည် · With milk",
         price: 2500,
         available: true,
+        signature: false,
         removedAt: null,
         photoUrl: null,
       },
@@ -48,6 +49,110 @@ test("owner maintains verbatim menu content, a final whole-MMK price and availab
   })
 })
 
+test("owners select multiple signature items and omitted updates preserve their selection", async () => {
+  const t = backend()
+  const owner = await authenticate(t, "signature-owner@example.com")
+  const storeId = await owner.mutation(api.stores.create, { name: "Parison" })
+  const categoryId = await owner.mutation(api.menu.saveCategory, {
+    storeId,
+    name: "Coffee",
+  })
+  const values = {
+    storeId,
+    categoryId,
+    name: "Parison coffee",
+    description: "",
+    price: 3000,
+    available: true,
+    photoId: null,
+  }
+  const first = await owner.mutation(api.menu.saveItem, {
+    ...values,
+    signature: true,
+  })
+  const second = await owner.mutation(api.menu.saveItem, {
+    ...values,
+    name: "Parison cold brew",
+    signature: true,
+  })
+  const ordinary = await owner.mutation(api.menu.saveItem, {
+    ...values,
+    name: "Americano",
+  })
+  expect(
+    (await owner.query(api.menu.manage, { storeId })).items
+      .filter((item) => item.signature)
+      .map((item) => item._id)
+  ).toEqual([first, second])
+  expect(await t.run((ctx) => ctx.db.get(ordinary))).toMatchObject({
+    signature: false,
+  })
+
+  // Older clients omit signature when saving other menu fields.
+  await owner.mutation(api.menu.saveItem, {
+    ...values,
+    itemId: first,
+    price: 3500,
+    available: false,
+  })
+  expect(await t.run((ctx) => ctx.db.get(first))).toMatchObject({
+    signature: true,
+    price: 3500,
+    available: false,
+  })
+  await owner.mutation(api.menu.saveItem, {
+    ...values,
+    itemId: first,
+    signature: false,
+  })
+  expect(
+    (await owner.query(api.menu.view, { storeId })).items.find(
+      (item) => item._id === first
+    )
+  ).toMatchObject({ signature: false })
+  expect(
+    (await owner.query(api.menu.view, { storeId })).items.find(
+      (item) => item._id === second
+    )
+  ).toMatchObject({ signature: true })
+})
+
+test("legacy menu records read as ordinary items and can be edited without a backfill", async () => {
+  const t = backend()
+  const owner = await authenticate(t, "legacy-menu@example.com")
+  const storeId = await owner.mutation(api.stores.create, {
+    name: "Legacy Cafe",
+  })
+  const categoryId = await owner.mutation(api.menu.saveCategory, {
+    storeId,
+    name: "Drinks",
+  })
+  const values = {
+    storeId,
+    categoryId,
+    name: "Tea",
+    description: "",
+    price: 1000,
+    available: true,
+    photoId: null,
+  }
+  const itemId = await t.run((ctx) => ctx.db.insert("menuItems", values))
+  expect(await t.run((ctx) => ctx.db.get(itemId))).not.toHaveProperty(
+    "signature"
+  )
+  expect(await owner.query(api.menu.manage, { storeId })).toMatchObject({
+    items: [{ _id: itemId, signature: false }],
+  })
+  expect(await owner.query(api.menu.view, { storeId })).toMatchObject({
+    items: [{ _id: itemId, signature: false }],
+  })
+  await owner.mutation(api.menu.saveItem, { ...values, itemId, price: 1200 })
+  expect(await t.run((ctx) => ctx.db.get(itemId))).toMatchObject({
+    signature: false,
+    price: 1200,
+  })
+})
+
 test("removing offerings preserves their identifiers and prevents selling or editing removed items", async () => {
   const t = backend()
   const owner = await authenticate(t, "archive-owner@example.com")
@@ -65,6 +170,7 @@ test("removing offerings preserves their identifiers and prevents selling or edi
     description: "",
     price: 1000,
     available: true,
+    signature: true,
     photoId: null,
   }
   const itemId = await owner.mutation(api.menu.saveItem, values)
@@ -79,10 +185,11 @@ test("removing offerings preserves their identifiers and prevents selling or edi
     name: "Tea",
     price: 1000,
     available: false,
+    signature: true,
   })
   expect(menu.items[0]!.removedAt).toEqual(expect.any(Number))
   await expect(
-    owner.mutation(api.menu.saveItem, { ...values, itemId })
+    owner.mutation(api.menu.saveItem, { ...values, itemId, signature: false })
   ).rejects.toThrow("MENU_ITEM_REMOVED")
   await owner.mutation(api.menu.removeCategory, { storeId, categoryId })
   expect(
@@ -138,6 +245,9 @@ test("guests, staff and another store cannot modify menus or mix store reference
       expected
     )
     await expect(
+      actor.mutation(api.menu.saveItem, { ...values, itemId, signature: true })
+    ).rejects.toThrow(expected)
+    await expect(
       actor.mutation(api.menu.removeItem, { storeId, itemId })
     ).rejects.toThrow(expected)
     await expect(
@@ -156,6 +266,7 @@ test("guests, staff and another store cannot modify menus or mix store reference
       storeId: otherStore,
       categoryId: otherCategory,
       itemId,
+      signature: true,
     })
   ).rejects.toThrow("STORE_ACCESS_DENIED")
   for (const price of [0, -1, 1.5, Number.MAX_SAFE_INTEGER + 1, NaN, Infinity])
@@ -167,7 +278,7 @@ test("guests, staff and another store cannot modify menus or mix store reference
       owner.mutation(api.menu.saveItem, { ...values, name })
     ).rejects.toThrow("INVALID_MENU_NAME")
   expect(await staff.query(api.menu.view, { storeId })).toMatchObject({
-    items: [{ name: "Tea", price: 1000 }],
+    items: [{ name: "Tea", price: 1000, signature: false }],
   })
   await expect(other.query(api.menu.view, { storeId })).rejects.toThrow(
     "STORE_ACCESS_DENIED"

@@ -79,6 +79,7 @@ export default defineSchema({
     role: v.union(v.literal("owner"), v.literal("staff")),
     name: v.optional(v.string()),
     email: v.optional(v.string()),
+    phone: v.optional(v.string()),
     revokedAt: v.optional(v.number()),
   })
     .index("by_user", ["userId"])
@@ -96,6 +97,7 @@ export default defineSchema({
     description: v.string(),
     price: v.number(),
     available: v.boolean(),
+    signature: v.optional(v.boolean()),
     photoId: v.union(v.id("menuPhotos"), v.null()),
     removedAt: v.optional(v.number()),
   })
@@ -108,10 +110,15 @@ export default defineSchema({
   }).index("by_store", ["storeId"]),
   staffInvitations: defineTable({
     storeId: v.id("stores"),
-    email: v.string(),
+    // Missing kind denotes an existing email-bound invitation.
+    kind: v.optional(v.union(v.literal("email"), v.literal("link"))),
+    email: v.optional(v.string()),
     tokenHash: v.string(),
     createdAt: v.number(),
     expiresAt: v.number(),
+    expiresInDays: v.optional(
+      v.union(v.literal(1), v.literal(3), v.literal(7))
+    ),
     status: v.union(
       v.literal("pending"),
       v.literal("accepted"),
@@ -123,6 +130,7 @@ export default defineSchema({
     ),
     acceptedBy: v.optional(v.string()),
     acceptedAt: v.optional(v.number()),
+    replacedBy: v.optional(v.id("staffInvitations")),
   })
     .index("by_token_hash", ["tokenHash"])
     .index("by_store", ["storeId"])

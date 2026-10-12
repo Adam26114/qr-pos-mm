@@ -3,6 +3,13 @@ import { useCopy } from "@/components/language-switcher"
 
 const en = {
   orders: "Orders",
+  counterOrder: "Counter order",
+  servedHistory: "Served history",
+  orderActions: "Order actions",
+  orderStatuses: "Order status",
+  noPendingOrders: "No orders waiting to cook.",
+  noCookingOrders: "No orders cooking.",
+  noAwaitingCash: "No served orders awaiting cash.",
   posIntro: "Browse your menu and take a cash order at the counter.",
   search: "Search menu",
   allItems: "All items",
@@ -91,6 +98,13 @@ const en = {
 }
 const my: Record<keyof typeof en, string> = {
   orders: "အော်ဒါများ",
+  counterOrder: "ကောင်တာအော်ဒါ",
+  servedHistory: "ပေးပို့ပြီး အော်ဒါမှတ်တမ်း",
+  orderActions: "အော်ဒါ စီမံရန်",
+  orderStatuses: "အော်ဒါအခြေအနေ",
+  noPendingOrders: "ချက်ပြုတ်ရန် စောင့်နေသော အော်ဒါမရှိပါ။",
+  noCookingOrders: "ချက်ပြုတ်နေသော အော်ဒါမရှိပါ။",
+  noAwaitingCash: "ပေးပို့ပြီး ငွေရှင်းရန် စောင့်နေသော အော်ဒါမရှိပါ။",
   posIntro: "မီနူးမှ ရွေးပြီး ကောင်တာတွင် ငွေသားအော်ဒါ လက်ခံပါ။",
   search: "မီနူးရှာရန်",
   allItems: "ပစ္စည်းအားလုံး",

@@ -23,12 +23,23 @@ _Avoid_: User when the owner role is intended.
 A store worker who can view the menu and orders, enter counter orders, advance preparation and service, and record cash received.
 _Avoid_: Owner, admin.
 
+**Staff Join Link**:
+A private, store-bound invitation that admits one staff account before its owner-selected expiry. Owners share the link directly and can revoke or replace it. A contact phone is optional membership information, never a login credential.
+
+**Staff Deactivation**:
+An owner's decision to immediately block a staff membership's access to the store while preserving the account and history. Only the owner can reactivate that membership; another invitation cannot bypass deactivation.
+_Avoid_: Account deletion, global platform ban.
+
 **Customer**:
 A guest who orders from a store without creating an account, either through its menu QR or with staff at the counter.
 _Avoid_: User when the customer is intended.
 
 **Menu Item**:
 A food or drink offering on a store's menu, with a displayed price and a name shown exactly as entered by the owner, independent of the interface language.
+
+**Signature Item**:
+A menu item the owner selects to highlight as a store specialty. A store may have several signature items; selection is independent of sales popularity and does not change the item's price or order behavior.
+_Avoid_: Popular item as a synonym for owner selection.
 
 **Cart**:
 A customer's selection of menu items and quantities before submitting an order.

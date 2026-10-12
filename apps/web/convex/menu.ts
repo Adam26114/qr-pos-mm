@@ -41,10 +41,11 @@ export const saveItem = mutation({
     description: v.string(),
     price: v.number(),
     available: v.boolean(),
+    signature: v.optional(v.boolean()),
     photoId: v.union(v.id("menuPhotos"), v.null()),
   },
   returns: v.id("menuItems"),
-  handler: async (ctx, { storeId, itemId, ...values }) => {
+  handler: async (ctx, { storeId, itemId, signature, ...values }) => {
     await requireStoreOwner(ctx, storeId)
     validateName(values.name)
     if (values.description.length > 2000)
@@ -71,10 +72,17 @@ export const saveItem = mutation({
         throw new ConvexError("STORE_ACCESS_DENIED")
       if (item.removedAt !== undefined)
         throw new ConvexError("MENU_ITEM_REMOVED")
-      await ctx.db.patch(itemId, values)
+      await ctx.db.patch(itemId, {
+        ...values,
+        signature: signature ?? item.signature ?? false,
+      })
       return itemId
     }
-    return await ctx.db.insert("menuItems", { storeId, ...values })
+    return await ctx.db.insert("menuItems", {
+      storeId,
+      ...values,
+      signature: signature ?? false,
+    })
   },
 })
 
@@ -97,6 +105,7 @@ async function readMenu(ctx: QueryCtx, storeId: Id<"stores">) {
         const photo = item.photoId ? await ctx.db.get(item.photoId) : null
         return {
           ...item,
+          signature: item.signature ?? false,
           removedAt: item.removedAt ?? null,
           photoUrl:
             photo?.storeId === storeId

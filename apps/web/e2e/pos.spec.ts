@@ -1,9 +1,11 @@
 import { expect, test } from "@playwright/test"
+import { createJoinLink } from "./helpers/staff-link"
 
 test("cash counter bill survives lost submission messages and a paid unassigned reload before completion", async ({
   page,
   browser,
   context,
+  baseURL,
 }) => {
   test.setTimeout(90_000)
   const errors: string[] = []
@@ -114,19 +116,20 @@ test("cash counter bill survives lost submission messages and a paid unassigned 
   ).toBeVisible()
   const observerContext = await browser.newContext({
     storageState: await context.storageState(),
+    baseURL,
   })
   try {
     const observer = await observerContext.newPage()
-    await observer.goto("http://localhost:3000/workspace/orders")
+    await observer.goto("/workspace/orders")
     const queue = observer.getByRole("region", {
       name: "Live orders",
       exact: true,
     })
-    await expect(queue.getByRole("heading", { level: 2 })).toHaveCount(1)
+    await expect(queue.getByRole("article")).toHaveCount(1)
     await expect(queue.getByText("Unpaid", { exact: true })).toBeVisible()
     await expect(
       queue.getByRole("button", { name: "Start cooking", exact: true })
-    ).toBeDisabled()
+    ).toHaveCount(0)
     await expect(
       queue.getByRole("combobox", { name: "Destination", exact: true })
     ).toHaveCount(0)
@@ -145,7 +148,7 @@ test("cash counter bill survives lost submission messages and a paid unassigned 
     await expect(cart.getByText("Unassigned", { exact: true })).toBeVisible()
     await expect(
       queue.getByRole("button", { name: "Start cooking", exact: true })
-    ).toBeDisabled()
+    ).toHaveCount(0)
     await context.setOffline(true)
     await expect(
       cart.getByRole("button", { name: "Assign destination", exact: true })
@@ -185,12 +188,13 @@ test("cash counter bill survives lost submission messages and a paid unassigned 
     await expect(
       queue.getByText("No open orders.", { exact: true })
     ).toBeVisible()
-    await page.getByRole("button", { name: "Served", exact: true }).click()
+    await page.getByRole("tab", { name: "Served history", exact: true }).click()
     await expect(
       page.getByText("No sugar · သကြားမပါ", { exact: true })
     ).toBeVisible()
+    await page.getByRole("button", { name: /^Order actions:/ }).click()
     await page
-      .getByRole("button", { name: "Order history", exact: true })
+      .getByRole("menuitem", { name: "Order history", exact: true })
       .click()
     await expect(
       page.getByRole("dialog").getByText("Destination changed", { exact: true })
@@ -219,10 +223,10 @@ test("cash counter bill survives lost submission messages and a paid unassigned 
   }
 })
 
-test("invited staff can take and hand over cash orders without owner menu controls", async ({
+test("staff joins with a share link and can hand over cash orders without owner menu controls", async ({
   page,
   browser,
-  request,
+  baseURL,
 }) => {
   test.setTimeout(60_000)
   await page.goto("/register")
@@ -271,27 +275,13 @@ test("invited staff can take and hand over cash orders without owner menu contro
   ).toBeVisible()
   await page.getByRole("link", { name: "Staff", exact: true }).click()
   const email = `pos-staff-${crypto.randomUUID()}@example.com`
-  await page.getByLabel("Staff email", { exact: true }).fill(email)
-  await page.getByRole("button", { name: "Invite staff", exact: true }).click()
-  let invitation = ""
-  await expect
-    .poll(async () => {
-      const messages = (await (
-        await request.get("http://127.0.0.1:4010/messages")
-      ).json()) as { to: string[]; text: string }[]
-      invitation =
-        messages
-          .find((message) => message.to.includes(email))
-          ?.text.match(/http:\/\/localhost:3000\/invite\/[a-f0-9]{64}/)?.[0] ??
-        ""
-      return invitation
-    })
-    .not.toBe("")
-  const staffContext = await browser.newContext()
+  const invitation = await createJoinLink(page)
+  const staffContext = await browser.newContext({ baseURL })
   try {
     const staff = await staffContext.newPage()
     await staff.goto(invitation)
     await staff.getByLabel("Your name", { exact: true }).fill("Counter staff")
+    await staff.getByLabel("Email", { exact: true }).fill(email)
     await staff.getByLabel("Password", { exact: true }).fill("CafePassword42!")
     await staff
       .getByRole("button", { name: "Create account", exact: true })
@@ -300,7 +290,7 @@ test("invited staff can take and hand over cash orders without owner menu contro
     await expect(
       staff.getByRole("heading", { name: "Staff POS Cafe", exact: true })
     ).toBeVisible()
-    await staff.goto("http://localhost:3000/workspace/menu")
+    await staff.goto("/workspace/menu")
     for (const label of [
       "Categories",
       "Tables",
@@ -360,7 +350,7 @@ test("invited staff can take and hand over cash orders without owner menu contro
     await expect(
       page.getByRole("button", { name: "Disable order sound", exact: true })
     ).toBeVisible()
-    await staff.goto("http://localhost:3000/workspace/orders")
+    await staff.goto("/workspace/orders")
     await staff
       .getByRole("button", { name: "Start cooking", exact: true })
       .click()
@@ -370,7 +360,9 @@ test("invited staff can take and hand over cash orders without owner menu contro
     await expect(
       page.getByText("No open orders.", { exact: true })
     ).toBeVisible()
-    await staff.getByRole("button", { name: "Served", exact: true }).click()
+    await staff
+      .getByRole("tab", { name: "Served history", exact: true })
+      .click()
     await expect(
       staff.getByText("Cash received", { exact: true })
     ).toBeVisible()

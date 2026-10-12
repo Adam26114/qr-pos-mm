@@ -227,13 +227,25 @@ function MenuCatalog({
                     )
                   }
                   status={
-                    !item.available ? (
-                      <Badge
-                        variant="outline"
-                        className="max-w-full whitespace-normal"
-                      >
-                        {copy.unavailableItem}
-                      </Badge>
+                    item.signature || !item.available ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {item.signature && (
+                          <Badge
+                            variant="outline"
+                            className="max-w-full border-primary/30 bg-primary/10 whitespace-normal"
+                          >
+                            {copy.signature}
+                          </Badge>
+                        )}
+                        {!item.available && (
+                          <Badge
+                            variant="outline"
+                            className="max-w-full whitespace-normal"
+                          >
+                            {copy.unavailableItem}
+                          </Badge>
+                        )}
+                      </div>
                     ) : undefined
                   }
                   actions={

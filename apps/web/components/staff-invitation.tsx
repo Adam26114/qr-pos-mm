@@ -2,6 +2,9 @@
 
 import Link from "next/link"
 import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
 import {
   useConvexAuth,
   useConvexConnectionState,
@@ -11,6 +14,8 @@ import {
 import { AuthBoundary } from "@convex-dev/better-auth/react"
 import { ConvexError } from "convex/values"
 import { Button } from "@workspace/ui/components/button"
+import { FieldSet } from "@workspace/ui/components/field"
+import { TextField } from "@workspace/ui/composed/text-field"
 import { FormCard } from "@workspace/ui/composed/form-card"
 import { Feedback } from "@workspace/ui/composed/feedback"
 import { LoadingState } from "@workspace/ui/composed/loading-state"
@@ -20,7 +25,7 @@ import { authClient } from "@/lib/auth-client"
 import { useOnline } from "@/lib/use-online"
 import { useSignOut } from "@/lib/use-sign-out"
 import { staffError } from "@/lib/staff-error"
-import type { MessageKey } from "@/lib/i18n"
+import { formError, type MessageKey } from "@/lib/i18n"
 import { AuthForm } from "./auth-form"
 import { useCopy } from "./language-switcher"
 
@@ -91,7 +96,7 @@ function AcceptInvitation({
   signOutFailed,
 }: {
   token: string
-  email: string
+  email?: string
   onSignOut: () => Promise<void>
   signOutFailed: boolean
 }) {
@@ -99,28 +104,46 @@ function AcceptInvitation({
   const online = useOnline()
   const connection = useConvexConnectionState()
   const connected = online && connection.isWebSocketConnected
-  const [pending, setPending] = useState(false)
   const [failure, setFailure] = useState<MessageKey | null>(null)
+  const schema = z.object({
+    phone: z
+      .string()
+      .trim()
+      .refine(
+        (value) =>
+          !value ||
+          (value.length <= 32 &&
+            /^[+\d\s().-]+$/.test(value) &&
+            /\d/.test(value)),
+        "invalidPhone"
+      ),
+  })
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting: pending },
+  } = useForm<{ phone: string }>({
+    resolver: zodResolver(schema),
+    defaultValues: { phone: "" },
+  })
   const user = useQuery(api.auth.getAuthUser, {})
   const accept = useMutation(api.staff.accept)
-  async function join() {
+  async function join({ phone }: { phone: string }) {
     if (!connected || pending) return
-    setPending(true)
     setFailure(null)
     try {
-      await accept({ token })
+      await accept({ token, ...(phone ? { phone } : {}) })
       window.location.replace("/workspace")
     } catch (error) {
       setFailure(staffError(error))
-      setPending(false)
     }
   }
   if (!user) return <LoadingState label={copy.loading} />
-  const matching = user.email.toLowerCase() === email
+  const matching = !email || user.email.toLowerCase() === email
   return (
     <FormCard
       title={copy.joinStore}
-      description={copy.invitationIntro}
+      description={email ? copy.invitationIntro : copy.staffJoinIntro}
       eyebrow={copy.staffAccount}
     >
       <p className="mb-4 text-sm break-all">
@@ -136,24 +159,39 @@ function AcceptInvitation({
           {failure ? copy[failure] : copy.requestFailed}
         </Feedback>
       )}
-      <div className="mt-5 flex flex-wrap gap-3">
-        <SubmitButton
-          type="button"
-          pending={pending}
-          pendingLabel={copy.working}
-          disabled={!connected || !matching}
-          onClick={join}
-        >
-          {copy.joinStore}
-        </SubmitButton>
-        <Button
-          variant="outline"
-          disabled={!online || pending}
-          onClick={onSignOut}
-        >
-          {copy.signOut}
-        </Button>
-      </div>
+      <form className="mt-5 space-y-5" onSubmit={handleSubmit(join)} noValidate>
+        <FieldSet disabled={!connected || !matching || pending}>
+          <TextField
+            id="contact-phone"
+            label={copy.optionalPhone}
+            description={copy.optionalPhoneIntro}
+            type="tel"
+            autoComplete="tel"
+            maxLength={32}
+            {...register("phone")}
+            error={
+              errors.phone ? formError(errors.phone.message, copy) : undefined
+            }
+          />
+        </FieldSet>
+        <div className="flex flex-wrap gap-3">
+          <SubmitButton
+            pending={pending}
+            pendingLabel={copy.working}
+            disabled={!connected || !matching}
+          >
+            {copy.joinStore}
+          </SubmitButton>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!online || pending}
+            onClick={onSignOut}
+          >
+            {copy.signOut}
+          </Button>
+        </div>
+      </form>
     </FormCard>
   )
 }

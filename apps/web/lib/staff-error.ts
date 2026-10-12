@@ -8,6 +8,8 @@ export function staffError(error: unknown): MessageKey {
     INVITATION_EMAIL_MISMATCH: "invitationMismatch",
     MEMBERSHIP_CONFLICT: "membershipConflict",
     MEMBER_EXISTS: "memberExists",
+    INVALID_PHONE: "invalidPhone",
+    STAFF_DEACTIVATED: "staffDeactivated",
   }
   return error instanceof ConvexError && typeof error.data === "string"
     ? (messages[error.data] ?? "requestFailed")

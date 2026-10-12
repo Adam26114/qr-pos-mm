@@ -66,7 +66,7 @@ export function CatalogCategories({
           variant={selected !== category.id ? "outline" : "default"}
           aria-pressed={selected === category.id}
           onClick={() => onCategoryChange(category.id)}
-          className="h-auto min-h-16 min-w-28 shrink-0 px-5 py-3 text-sm whitespace-normal"
+          className="h-auto min-h-16 min-w-28 shrink-0 px-5 py-3 text-sm whitespace-normal transition-none active:translate-y-0"
         >
           <span className="max-w-44 [overflow-wrap:anywhere]">
             {category.label}

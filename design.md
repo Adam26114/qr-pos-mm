@@ -40,6 +40,34 @@ Small photo cards                     Items, quantities, note, total, checkout
 - Keep cart contents intact when searching or switching category tabs. Show quantities, removal, notes, and the total clearly, with one primary checkout action. Render prices using the shared MMK formatter and tabular numerals.
 - Use the store's existing table tiles and Takeaway for counter-order destination selection.
 
+## Customer menu layout
+
+- In All items, show a Signature items section first when any exist, then nonempty category sections in the category strip's existing creation order. Keep item creation order within each section; do not rank by name, price, availability, or popularity.
+- Use ordinary photo cards and the current responsive grid/cart layout. Section headings are h3 and customer item names are h4. Keep search and category selection instant, with no entrance staggering or animated reordering.
+- Owners can select several signature items through the Add/Edit item dialog. Show a small translated Signature badge on marked customer and workspace cards. Authored names and category labels remain unchanged.
+- Signature items also appear in their usual categories; both cards add to the same cart entry. A selected category shows only its own section. Search filters the active sections, and empty sections are omitted.
+- Keep unavailable signature items visible with their availability status and disabled cart action. Live changes, filtering, and language changes preserve cart quantities and notes.
+- Manual ordering, popularity ranking, and automated recommendations belong to future work.
+
+## Orders layout
+
+- Keep the Orders title and compact sound toggle in one toolbar. Put new-order notifications and Mark all seen directly below it.
+- Use shadcn line tabs for Live orders and Served history. Live orders has Pending, Cooking, and Awaiting cash lanes with counts and empty states. Awaiting cash contains served unpaid orders.
+- Show three equal lanes when the content area is at least 900px wide. Below that, use horizontally scrolling status tabs and one lane at a time. Default to Pending and preserve the selection during realtime changes.
+- Use compact tickets with 16px padding, a prominent table/Takeaway/Unassigned label, short bill ID, creation time, source, payment status, and new-order indicator. Show all items and notes, with an emphasized final MMK total.
+- Each ticket exposes its next step as the primary action. Keep cash collection separately available for unpaid QR orders. Correct destination and Order history belong in an accessible top-right three-dot DropdownMenu.
+- Keep workspace dialogs outside the lanes so realtime movement does not close them. Return focus to the opening control or its lane heading when the ticket moves or leaves.
+- Board updates and keyboard actions stay instant. Use restrained pointer press feedback and short origin-aware popup transitions, respecting reduced motion. Served history retains newest-first pagination.
+
+## Staff layout and access
+
+- Use one compact Staff toolbar with a Create join link action, followed by shadcn line tabs for Staff and Join links. Adapt the users-table reference through the existing theme and components.
+- Compose a reusable DataTable from shadcn Table and TanStack Table. Show the staff member's name/email, optional contact phone, joined date, status, and one three-dot row menu. Keep search, status filtering, sorting, and pagination instant; derive rows and counts directly from Convex queries.
+- Owners deactivate or reactivate store access through a confirmation outside the table. Deactivation blocks operational access immediately, including open sessions, while preserving the account and history. A deactivated member cannot restore access through another invitation; only the owner can reactivate them.
+- Create one single-use shareable link per staff member. Offer 1, 3, or 7-day expiry, defaulting to 7 days. Staff enter their own name, email and password, then an optional contact phone when joining. Phone is never a sign-in credential. Existing email-bound invitations retain their email restriction.
+- Show and copy the private join URL immediately after creation. Store only its hash; explain that it must be copied before closing. Regenerate replaces the old link and returns a fresh URL. Owners can revoke pending links, and the table retains accepted, expired and revoked entries.
+- On narrow screens, wrap the toolbar and pagination controls and contain table scrolling inside its surface. Keep row actions available, long identity text contained, visible keyboard focus, localized status text, and reduced-motion popup behavior. Dialogs remain controlled outside paginated rows. Cancel returns focus to the row trigger; successful access/status changes focus the page heading before realtime filtering can remove the row. Regeneration keeps focus in its new-link result dialog.
+
 ## Forms and dialogs
 
 - Use labeled shared fields with validation messages beside the affected input. Match adjacent control heights, corner radii, and spacing.

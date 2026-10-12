@@ -20,11 +20,13 @@ Use the existing shared patterns first:
 - `ConfirmAction`: button-triggered AlertDialog with an accessible title/description, cancel action, pending command, and failure feedback. Keeps the confirmation open if the command fails. Callers provide all copy and the authorized command.
 - `ConfirmDialog`: the same confirmation behavior with caller-controlled open state, for actions opened from a dropdown menu. Mount it outside the menu popup and supply the original trigger as its final focus target.
 - `LoadingState`: Card, localized status text, and decorative Skeletons.
-- `CatalogCard`: photo, authored title/description, price, status, and caller-supplied actions in a responsive Card. The compact POS variant keeps the cart action beside the price and accepts tools at the photo's top-right corner.
+- `CatalogCard`: photo, authored title/description, price, status, and caller-supplied actions in a responsive Card. Its heading level defaults to h3; pass h4 within customer category sections. The compact POS variant keeps the cart action beside the price and accepts tools at the photo's top-right corner.
 - `CatalogFilters`: accessible search and horizontally scrolling category buttons for public menus; callers supply labels, options, and transient filter state. `CatalogSearch` and `CatalogCategories` can be composed separately.
 - `CatalogTabs`: compact, horizontally scrolling shadcn Tabs with keyboard navigation and an associated catalog panel. Callers supply authored category labels, transient selection, and catalog content.
 - `CartItems`: item amounts, availability, accessible quantity/remove controls, or fixed reviewed quantities; callers provide entries, labels and handlers. Used by counter POS and the guest cart. The compact POS variant accepts caller-rendered thumbnails and grouped quantity controls.
 - `DestinationTiles`: selectable options with pressed state for table/Takeaway dialogs. Callers own the available options, selection, and assignment command.
+- `DataTable`: shadcn Table with TanStack sorting and pagination, localized controls, and contained horizontal scrolling. Callers supply columns, live rows, filter definitions, localized empty/pagination copy and row actions. It owns no access commands or Convex state.
+- `OrderTicket`: compact Card with destination, metadata, badges, full item lines, note, formatted total, and caller-supplied tools/actions. It owns no order commands or translations.
 - `EditorDialog`: controlled Dialog with a localized title, description and Close action, keeping pending commands open. Its form layout fixes the header and lets the child form own scrolling and one footer action row instead of appending another Close button.
 
 ## Composition rules

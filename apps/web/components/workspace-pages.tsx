@@ -121,12 +121,6 @@ export function WorkspaceMenu() {
 
 export function WorkspaceStaff() {
   const { workspace, connected } = useWorkspace()
-  const { copy } = useCopy()
   if (workspace.accountKind !== "owner" || !workspace.store) return null
-  return (
-    <>
-      <h1 className="font-heading text-3xl font-semibold">{copy.staffTeam}</h1>
-      <StaffManager storeId={workspace.store._id} connected={connected} />
-    </>
-  )
+  return <StaffManager storeId={workspace.store._id} connected={connected} />
 }

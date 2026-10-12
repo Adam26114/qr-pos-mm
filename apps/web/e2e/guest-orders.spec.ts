@@ -4,10 +4,12 @@ import { createGuestCafe } from "./helpers/guest-cafe"
 test("a guest reviews a cash bill, selects a table and retains separate private tracking links", async ({
   page,
   browser,
+  baseURL,
 }) => {
   test.setTimeout(90_000)
   const menuUrl = await createGuestCafe(page)
   const guestContext = await browser.newContext({
+    baseURL,
     viewport: { width: 390, height: 844 },
   })
   const guest = await guestContext.newPage()
@@ -105,12 +107,12 @@ test("a guest reviews a cash bill, selects a table and retains separate private 
     await expect(
       page
         .getByRole("region", { name: "Live orders", exact: true })
-        .getByRole("heading", { level: 2 })
+        .getByRole("article")
     ).toHaveCount(2)
     await expect(
       page.getByText("No sugar · သကြားမပါ", { exact: true })
     ).toBeVisible()
-    const sharedBrowser = await browser.newContext()
+    const sharedBrowser = await browser.newContext({ baseURL })
     const stranger = await sharedBrowser.newPage()
     try {
       await stranger.goto(`/orders/${"f".repeat(64)}`)
@@ -148,10 +150,12 @@ test("a guest reviews a cash bill, selects a table and retains separate private 
 test("a changed menu requires another review and a lost acknowledgement recovers the accepted bill", async ({
   page,
   browser,
+  baseURL,
 }) => {
   test.setTimeout(90_000)
   const menuUrl = await createGuestCafe(page)
   const context = await browser.newContext({
+    baseURL,
     viewport: { width: 390, height: 844 },
   })
   const guest = await context.newPage()
@@ -241,7 +245,7 @@ test("a changed menu requires another review and a lost acknowledgement recovers
       .getByRole("button", { name: "Retry same submission", exact: true })
       .click()
     await expect.poll(() => droppedSubmissions).toBe(2)
-    await expect(queue.getByRole("heading", { level: 2 })).toHaveCount(1)
+    await expect(queue.getByRole("article")).toHaveCount(1)
     await expect(
       queue.getByText("3,000 MMK", { exact: true }).last()
     ).toBeVisible()
@@ -259,7 +263,7 @@ test("a changed menu requires another review and a lost acknowledgement recovers
         .getByRole("navigation", { name: "Your previous orders", exact: true })
         .getByRole("link")
     ).toHaveCount(1)
-    await expect(queue.getByRole("heading", { level: 2 })).toHaveCount(1)
+    await expect(queue.getByRole("article")).toHaveCount(1)
   } finally {
     await context.close()
   }

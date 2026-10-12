@@ -1,12 +1,14 @@
 import { expect, test, type Page } from "@playwright/test"
 import { createGuestCafe } from "./helpers/guest-cafe"
+import { createJoinLink } from "./helpers/staff-link"
 
 test("staff prepares seated cash, corrects its table, collects after serving and alerts only for fresh work", async ({
   page,
   browser,
-  request,
+  baseURL,
 }) => {
   test.setTimeout(120_000)
+  await page.setViewportSize({ width: 1440, height: 960 })
   const menuUrl = await createGuestCafe(page)
   await page.getByRole("button", { name: "Tables", exact: true }).click()
   await page.getByLabel("Table number", { exact: true }).fill("7")
@@ -16,29 +18,16 @@ test("staff prepares seated cash, corrects its table, collects after serving and
     .getByRole("dialog")
     .getByRole("button", { name: "Close", exact: true })
     .click()
-  await page.goto("/workspace/staff")
+  await page.getByRole("link", { name: "Staff", exact: true }).click()
   const email = `qr-staff-${crypto.randomUUID()}@example.com`
-  await page.getByLabel("Staff email", { exact: true }).fill(email)
-  await page.getByRole("button", { name: "Invite staff", exact: true }).click()
-  let invitation = ""
-  await expect
-    .poll(async () => {
-      const messages = (await (
-        await request.get("http://127.0.0.1:4010/messages")
-      ).json()) as { to: string[]; text: string }[]
-      invitation =
-        messages
-          .find((message) => message.to.includes(email))
-          ?.text.match(/http:\/\/localhost:3000\/invite\/[a-f0-9]{64}/)?.[0] ??
-        ""
-      return invitation
-    })
-    .not.toBe("")
+  const invitation = await createJoinLink(page)
   const staffContext = await browser.newContext({
     viewport: { width: 390, height: 844 },
+    baseURL,
   })
   const guestContext = await browser.newContext({
     viewport: { width: 390, height: 844 },
+    baseURL,
   })
   const staff = await staffContext.newPage()
   const guest = await guestContext.newPage()
@@ -62,6 +51,7 @@ test("staff prepares seated cash, corrects its table, collects after serving and
   try {
     await staff.goto(invitation)
     await staff.getByLabel("Your name", { exact: true }).fill("Seated staff")
+    await staff.getByLabel("Email", { exact: true }).fill(email)
     await staff.getByLabel("Password", { exact: true }).fill("CafePassword42!")
     await staff
       .getByRole("button", { name: "Create account", exact: true })
@@ -70,7 +60,7 @@ test("staff prepares seated cash, corrects its table, collects after serving and
     await expect(
       staff.getByRole("heading", { name: "Guest Cafe", exact: true })
     ).toBeVisible()
-    await staff.goto("http://localhost:3000/workspace/orders")
+    await staff.goto("/workspace/orders")
     for (const name of ["Staff", "Subscription"])
       await expect(staff.getByRole("link", { name, exact: true })).toHaveCount(
         0
@@ -104,26 +94,33 @@ test("staff prepares seated cash, corrects its table, collects after serving and
       ownerQueue.getByText("5,000 MMK", { exact: true }).last()
     ).toBeVisible()
     await staffContext.setOffline(true)
-    for (const name of [
-      "Correct destination",
-      "Start cooking",
-      "Payment received",
-    ])
+    for (const name of ["Start cooking", "Payment received"])
       await expect(
         queue.getByRole("button", { name, exact: true })
       ).toBeDisabled()
-    await staffContext.setOffline(false)
-    await queue
-      .getByRole("button", { name: "Correct destination", exact: true })
-      .click()
-    await queue
-      .getByRole("combobox", { name: "Destination", exact: true })
-      .click()
+    await queue.getByRole("button", { name: /^Order actions:/ }).click()
     await expect(
-      staff.getByRole("option", { name: "Takeaway", exact: true })
+      staff.getByRole("menuitem", { name: "Correct destination", exact: true })
+    ).toBeDisabled()
+    await staff
+      .getByRole("menuitem", { name: "Order history", exact: true })
+      .press("Escape")
+    await staffContext.setOffline(false)
+    await queue.getByRole("button", { name: /^Order actions:/ }).click()
+    await staff
+      .getByRole("menuitem", { name: "Correct destination", exact: true })
+      .click()
+    const destination = staff.getByRole("dialog", {
+      name: "Destination",
+      exact: true,
+    })
+    await expect(
+      destination.getByRole("button", { name: "Takeaway", exact: true })
     ).toHaveCount(0)
-    await staff.getByRole("option", { name: "Table 7", exact: true }).click()
-    await queue
+    await destination
+      .getByRole("button", { name: "Table 7", exact: true })
+      .click()
+    await destination
       .getByRole("button", { name: "Assign destination", exact: true })
       .click()
     await expect(guest.getByText("Table 7", { exact: true })).toBeVisible()
@@ -133,6 +130,11 @@ test("staff prepares seated cash, corrects its table, collects after serving and
       .click()
     await expect(guest.getByText("Cooking", { exact: true })).toBeVisible()
     await expect(ownerQueue.getByText("Cooking", { exact: true })).toBeVisible()
+    await expect(
+      queue.getByRole("tab", { name: "Pending (0)", exact: true })
+    ).toHaveAttribute("aria-selected", "true")
+    await expect(staff.locator("#orders-lane-pending")).toBeFocused()
+    await queue.getByRole("tab", { name: "Cooking (1)", exact: true }).click()
     await staff.getByRole("button", { name: "မြန်မာ", exact: true }).click()
     await expect(
       staff.getByText("No sugar · သကြားမပါ", { exact: true })
@@ -153,8 +155,15 @@ test("staff prepares seated cash, corrects its table, collects after serving and
     await expect(guest.getByText("Served", { exact: true })).toBeVisible()
     await expect(guest.getByText("Unpaid", { exact: true })).toBeVisible()
     await expect(
-      queue.getByText("Awaiting cash", { exact: true })
+      queue.getByRole("tab", { name: "Awaiting cash (1)", exact: true })
     ).toBeVisible()
+    await expect(
+      queue.getByRole("tab", { name: "Cooking (0)", exact: true })
+    ).toHaveAttribute("aria-selected", "true")
+    await expect(staff.locator("#orders-lane-cooking")).toBeFocused()
+    await queue
+      .getByRole("tab", { name: "Awaiting cash (1)", exact: true })
+      .click()
     await guest.reload()
     await expect(guest.getByText("Served", { exact: true })).toBeVisible()
     await queue
@@ -174,9 +183,12 @@ test("staff prepares seated cash, corrects its table, collects after serving and
       guest.getByText("Cash received", { exact: true })
     ).toBeVisible()
     await expect(guest.getByText("Served", { exact: true })).toBeVisible()
-    await staff.getByRole("button", { name: "Served", exact: true }).click()
     await staff
-      .getByRole("button", { name: "Order history", exact: true })
+      .getByRole("tab", { name: "Served history", exact: true })
+      .click()
+    await staff.getByRole("button", { name: /^Order actions:/ }).click()
+    await staff
+      .getByRole("menuitem", { name: "Order history", exact: true })
       .click()
     const history = staff.getByRole("dialog")
     for (const event of [
@@ -190,9 +202,8 @@ test("staff prepares seated cash, corrects its table, collects after serving and
       history.getByText("Table 4 → Table 7", { exact: true })
     ).toBeVisible()
     await history.getByRole("button", { name: "Close", exact: true }).click()
-    await staff
-      .getByRole("button", { name: "Live orders", exact: true })
-      .click()
+    await staff.getByRole("tab", { name: "Live orders", exact: true }).click()
+    await queue.getByRole("tab", { name: "Pending (0)", exact: true }).click()
     await staff
       .getByRole("button", { name: "Enable order sound", exact: true })
       .click()

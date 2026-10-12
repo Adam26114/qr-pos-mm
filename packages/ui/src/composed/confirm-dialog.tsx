@@ -12,6 +12,7 @@ import {
 } from "@workspace/ui/components/alert-dialog"
 import { SubmitButton } from "@workspace/ui/composed/submit-button"
 import { Feedback } from "@workspace/ui/composed/feedback"
+import type { Button } from "@workspace/ui/components/button"
 
 export type ConfirmationOptions = {
   label: string
@@ -23,6 +24,9 @@ export type ConfirmationOptions = {
   disabled?: boolean
   onConfirm: () => Promise<unknown>
   finalFocus?: ComponentProps<typeof AlertDialogContent>["finalFocus"]
+  confirmVariant?: ComponentProps<typeof Button>["variant"]
+  className?: string
+  overlayClassName?: string
 }
 
 // Keep confirmation mounted when the menu that opened it closes.
@@ -39,6 +43,9 @@ export function ConfirmDialog({
   disabled,
   onConfirm,
   finalFocus,
+  confirmVariant = "destructive",
+  className,
+  overlayClassName,
 }: ConfirmationOptions & {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -70,7 +77,11 @@ export function ConfirmDialog({
       }}
     >
       {children}
-      <AlertDialogContent finalFocus={finalFocus}>
+      <AlertDialogContent
+        finalFocus={finalFocus}
+        className={className}
+        overlayClassName={overlayClassName}
+      >
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
@@ -82,7 +93,7 @@ export function ConfirmDialog({
           </AlertDialogCancel>
           <SubmitButton
             type="button"
-            variant="destructive"
+            variant={confirmVariant}
             pending={pending}
             pendingLabel={pendingLabel}
             disabled={disabled}

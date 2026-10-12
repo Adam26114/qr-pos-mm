@@ -44,6 +44,7 @@ type Fields = {
   price: string
   categoryId: string
   available: boolean
+  signature: boolean
 }
 
 export function MenuItemEditor({
@@ -95,6 +96,7 @@ export function MenuItemEditor({
     price: item ? String(item.price) : "",
     categoryId: item?.categoryId ?? categories[0]!._id,
     available: item?.available ?? true,
+    signature: item?.signature ?? false,
   }
   const schema = z.object({
     name: z
@@ -113,6 +115,7 @@ export function MenuItemEditor({
       ),
     categoryId: z.string().min(1, "chooseCategory"),
     available: z.boolean(),
+    signature: z.boolean(),
   })
   const {
     register,
@@ -176,6 +179,7 @@ export function MenuItemEditor({
         price: "",
         categoryId: categories[0]!._id,
         available: true,
+        signature: false,
       })
       setSelectedPhoto(null)
       setRemovePhoto(false)
@@ -383,6 +387,32 @@ export function MenuItemEditor({
                   </FieldLabel>
                   <Switch
                     id="item-available"
+                    name={field.name}
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    onBlur={field.onBlur}
+                    ref={field.ref}
+                    disabled={disabled}
+                  />
+                </Field>
+              )}
+            />
+            <Controller
+              name="signature"
+              control={control}
+              render={({ field }) => (
+                <Field orientation="horizontal">
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <FieldLabel htmlFor="item-signature">
+                      {copy.signatureItem}
+                    </FieldLabel>
+                    <FieldDescription id="item-signature-note">
+                      {copy.signatureIntro}
+                    </FieldDescription>
+                  </div>
+                  <Switch
+                    id="item-signature"
+                    aria-describedby="item-signature-note"
                     name={field.name}
                     checked={field.value}
                     onCheckedChange={field.onChange}

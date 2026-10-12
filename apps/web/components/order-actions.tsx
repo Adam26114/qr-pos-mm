@@ -22,9 +22,94 @@ import { formatMMK } from "@/lib/menu"
 import { usePosCopy } from "@/lib/pos-copy"
 import { usePosCommand } from "@/lib/use-pos-command"
 import { useCopy } from "./language-switcher"
+import styles from "./orders.module.css"
 
-type Order = FunctionReturnType<typeof api.orders.queue>[number]
+export type WorkspaceOrder = FunctionReturnType<typeof api.orders.queue>[number]
+type Order = WorkspaceOrder
+type BoardActions = {
+  onCash: (trigger: HTMLButtonElement) => void
+  onAssign: (trigger: HTMLButtonElement) => void
+  onAdvanced: (trigger: HTMLButtonElement) => void
+}
 export function OrderActions({
+  board,
+  ...props
+}: {
+  order: Order
+  checkout?: boolean
+  board?: BoardActions
+}) {
+  return board ? (
+    <BoardOrderActions order={props.order} {...board} />
+  ) : (
+    <DefaultOrderActions {...props} />
+  )
+}
+
+function BoardOrderActions({
+  order,
+  onCash,
+  onAssign,
+  onAdvanced,
+}: { order: Order } & BoardActions) {
+  const pos = usePosCopy()
+  const { copy } = useCopy()
+  const action = usePosCommand()
+  const cook = useMutation(api.orders.startCooking)
+  const serve = useMutation(api.orders.markServed)
+  const command = { storeId: order.storeId, orderId: order._id }
+  const needsCash =
+    !order.payment && (order.source === "counter" || order.status === "served")
+  const needsDestination =
+    !order.destination && (order.source === "qr" || !!order.payment)
+  const label = needsCash
+    ? pos.paymentReceived
+    : needsDestination
+      ? pos.assignDestination
+      : order.status === "pending"
+        ? pos.startCooking
+        : order.destination?.kind === "takeaway"
+          ? pos.handover
+          : pos.markServed
+  if (order.status === "served" && order.payment) return null
+  return (
+    <div className="space-y-2">
+      <SubmitButton
+        type="button"
+        pending={action.pending}
+        pendingLabel={copy.working}
+        disabled={!action.connected}
+        className={`${styles.pressable} h-auto min-h-10 rounded-md px-3 py-2 whitespace-normal`}
+        onClick={async (event) => {
+          const trigger = event.currentTarget
+          if (needsCash) onCash(trigger)
+          else if (needsDestination) onAssign(trigger)
+          else if (
+            await action.run(() =>
+              order.status === "pending" ? cook(command) : serve(command)
+            )
+          )
+            onAdvanced(trigger)
+        }}
+      >
+        {label}
+      </SubmitButton>
+      {!order.payment && order.source === "qr" && order.status !== "served" && (
+        <Button
+          variant="outline"
+          className={`${styles.pressable} h-auto min-h-9 w-full px-3 py-2 whitespace-normal`}
+          disabled={!action.connected || action.pending}
+          onClick={(event) => onCash(event.currentTarget)}
+        >
+          {pos.paymentReceived}
+        </Button>
+      )}
+      {action.failure && <Feedback tone="error">{action.failure}</Feedback>}
+    </div>
+  )
+}
+
+function DefaultOrderActions({
   order,
   checkout = false,
 }: {

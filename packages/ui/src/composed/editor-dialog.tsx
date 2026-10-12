@@ -1,5 +1,5 @@
 "use client"
-import type { ReactNode } from "react"
+import type { ReactNode, ComponentProps } from "react"
 import { cn } from "cn"
 import {
   Dialog,
@@ -19,6 +19,9 @@ export function EditorDialog({
   pending = false,
   children,
   formLayout = false,
+  finalFocus,
+  className,
+  overlayClassName,
 }: {
   open: boolean
   onClose: () => void
@@ -28,6 +31,9 @@ export function EditorDialog({
   pending?: boolean
   children: ReactNode
   formLayout?: boolean
+  finalFocus?: ComponentProps<typeof DialogContent>["finalFocus"]
+  className?: string
+  overlayClassName?: string
 }) {
   return (
     <Dialog
@@ -39,9 +45,12 @@ export function EditorDialog({
       <DialogContent
         aria-label={title}
         showCloseButton={false}
+        finalFocus={finalFocus}
+        overlayClassName={overlayClassName}
         className={cn(
           "max-h-[90dvh] overflow-y-auto sm:max-w-xl",
-          formLayout && "flex flex-col gap-0 overflow-hidden p-0"
+          formLayout && "flex flex-col gap-0 overflow-hidden p-0",
+          className
         )}
       >
         <DialogHeader

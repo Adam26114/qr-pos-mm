@@ -1,6 +1,73 @@
 export type Language = "en" | "my"
 
 const en = {
+  createJoinLink: "Create join link",
+  joinLinks: "Join links",
+  joinLinksIntro:
+    "Each link admits one staff member. Revoke a link at any time.",
+  joinLinkIntro:
+    "Share this single-use link with the staff member you want to add.",
+  linkExpiry: "Link expires after",
+  oneDay: "1 day",
+  threeDays: "3 days",
+  sevenDays: "7 days",
+  copyLink: "Copy link",
+  linkCopied: "Link copied.",
+  copyLinkFailed: "Could not copy. Select and copy the link below.",
+  copyBeforeClosing:
+    "Copy this link before closing. To get another link later, regenerate it from the table; the previous link will stop working.",
+  done: "Done",
+  regenerateLink: "Regenerate link",
+  regenerateLinkTitle: "Replace this join link?",
+  regenerateLinkIntro:
+    "The previous link will stop working. Copy and share the new link with your staff member.",
+  revokeLink: "Revoke link",
+  revokeLinkTitle: "Revoke this join link?",
+  revokeLinkIntro: "This link will immediately stop granting staff access.",
+  deactivateStaff: "Deactivate",
+  deactivateStaffTitle: "Deactivate this staff member?",
+  deactivateStaffIntro:
+    "Access to this store will stop immediately, including in open sessions. Their account and order history are kept. You can reactivate them later.",
+  reactivateStaff: "Reactivate",
+  reactivateStaffTitle: "Reactivate this staff member?",
+  reactivateStaffIntro:
+    "This account will regain staff access to your store. Review who owns the account before restoring access.",
+  deactivatedMember: "Deactivated",
+  searchStaff: "Search staff",
+  searchLinks: "Search join links",
+  allStatuses: "All statuses",
+  status: "Status",
+  phone: "Contact phone",
+  joinedOn: "Joined",
+  createdOn: "Created",
+  expiresOn: "Expires",
+  actions: "Actions",
+  staffActions: "Staff actions",
+  linkActions: "Link actions",
+  noMatchingStaff: "No staff match your search or status filter.",
+  noJoinLinks:
+    "No join links yet. Create a link to add your first staff member.",
+  noMatchingLinks: "No links match your search or status filter.",
+  rowsPerPage: "Rows per page",
+  previousPage: "Previous",
+  nextPage: "Next",
+  page: "Page",
+  of: "of",
+  linkLabel: "Join link",
+  legacyInvitation: "Email invitation",
+  singleUseLink: "Single-use link",
+  linkReady: "Your join link is ready",
+  staffMember: "Staff member",
+  optionalPhone: "Contact phone (optional)",
+  optionalPhoneIntro:
+    "For the owner to contact you. This phone number is never used to sign in.",
+  staffJoinIntro:
+    "Join with your own name, email, and password. This link can be used by one staff member.",
+  invalidPhone:
+    "Enter a contact phone number using digits, spaces, +, parentheses, periods or hyphens, up to 32 characters.",
+  staffDeactivated:
+    "Your access to this store is deactivated. Ask the owner to reactivate it. A new link cannot restore it.",
+
   overview: "Overview",
   menu: "Menu",
   subscription: "Subscription",
@@ -53,6 +120,10 @@ const en = {
   finalPriceNote: "One final price, in whole MMK. No additional charges.",
   availableItem: "Available",
   unavailableItem: "Unavailable",
+  signatureItem: "Signature item",
+  signature: "Signature",
+  signatureItems: "Signature items",
+  signatureIntro: "Highlight this item among your store’s specialties.",
   itemPhoto: "Photo",
   photoNote: "Optional JPEG, PNG or WebP, up to 5 MB.",
   removePhoto: "Remove photo",
@@ -96,7 +167,7 @@ const en = {
   cancelInvitationTitle: "Cancel this invitation?",
   cancelInvitation: "Cancel invitation",
   removeAccessIntro:
-    "This account will immediately lose access to this store. A new invitation is required to return.",
+    "This account will immediately lose access to this store. The owner can reactivate access later.",
   removeAccessTitle: "Remove staff access?",
   removeAccess: "Remove access",
   deliveryFailed:
@@ -116,10 +187,10 @@ const en = {
   inviteStaff: "Invite staff",
   staffEmail: "Staff email",
   staffTeamIntro:
-    "Invite each staff member to use their own account. Invitations expire after seven days.",
+    "Manage access and share a single-use link for each new staff member.",
   staffTeam: "Staff",
   staffRegisterIntro:
-    "Use your own name and password. This account joins the store in your invitation.",
+    "Use your own name, email, and password. This account joins the store in your link.",
   staffRegisterTitle: "Create your staff account.",
   staffAccount: "Staff account",
   language: "Language",
@@ -172,7 +243,7 @@ const en = {
     "You’re signed in with your individual staff account for this store.",
   staffAccessRemoved: "Staff access removed.",
   staffAccessRemovedIntro:
-    "Your access was removed. Ask the store owner for a new invitation.",
+    "Your access is deactivated. Ask the store owner to reactivate it.",
   activeTrial: "Active trial",
   expiredTrial: "Trial expired",
   trialEnds: "Trial ends",
@@ -202,6 +273,75 @@ const en = {
 }
 
 const my: Record<keyof typeof en, string> = {
+  createJoinLink: "ဝင်ရောက်ရန် လင့်ခ်ဖန်တီးမည်",
+  joinLinks: "ဝင်ရောက်ရန် လင့်ခ်များ",
+  joinLinksIntro:
+    "လင့်ခ်တစ်ခုမှ ဝန်ထမ်းတစ်ဦး ဝင်ရောက်နိုင်ပါသည်။ လင့်ခ်ကို အချိန်မရွေး ပယ်ဖျက်နိုင်ပါသည်။",
+  joinLinkIntro:
+    "ထည့်သွင်းလိုသော ဝန်ထမ်းအား တစ်ကြိမ်သာ အသုံးပြုနိုင်သော ဤလင့်ခ်ကို မျှဝေပါ။",
+  linkExpiry: "လင့်ခ် သက်တမ်း",
+  oneDay: "၁ ရက်",
+  threeDays: "၃ ရက်",
+  sevenDays: "၇ ရက်",
+  copyLink: "လင့်ခ် ကူးယူမည်",
+  linkCopied: "လင့်ခ် ကူးယူပြီးပါပြီ။",
+  copyLinkFailed: "ကူးယူမရပါ။ အောက်ပါလင့်ခ်ကို ရွေး၍ ကူးယူပါ။",
+  copyBeforeClosing:
+    "မပိတ်မီ လင့်ခ်ကို ကူးယူပါ။ နောက်တစ်ကြိမ် လင့်ခ်လိုပါက ဇယားမှ ပြန်ဖန်တီးပါ။ ယခင်လင့်ခ်ကို အသုံးပြုနိုင်တော့မည် မဟုတ်ပါ။",
+  done: "ပြီးပါပြီ",
+  regenerateLink: "လင့်ခ် ပြန်ဖန်တီးမည်",
+  regenerateLinkTitle: "ဤဝင်ရောက်ရန် လင့်ခ်ကို အစားထိုးမလား။",
+  regenerateLinkIntro:
+    "ယခင်လင့်ခ်ကို အသုံးပြုနိုင်တော့မည် မဟုတ်ပါ။ လင့်ခ်အသစ်ကို ကူးယူ၍ ဝန်ထမ်းအား မျှဝေပါ။",
+  revokeLink: "လင့်ခ် ပယ်ဖျက်မည်",
+  revokeLinkTitle: "ဤဝင်ရောက်ရန် လင့်ခ်ကို ပယ်ဖျက်မလား။",
+  revokeLinkIntro:
+    "ဤလင့်ခ်မှ ဝန်ထမ်းဝင်ရောက်ခွင့် ချက်ချင်း ရရှိနိုင်တော့မည် မဟုတ်ပါ။",
+  deactivateStaff: "ဝင်ရောက်ခွင့် ပိတ်မည်",
+  deactivateStaffTitle: "ဤဝန်ထမ်း၏ ဝင်ရောက်ခွင့်ကို ပိတ်မလား။",
+  deactivateStaffIntro:
+    "ဖွင့်ထားသော စာမျက်နှာများအပါအဝင် ဆိုင်သို့ ဝင်ရောက်ခွင့် ချက်ချင်း ရပ်တန့်ပါမည်။ အကောင့်နှင့် အော်ဒါမှတ်တမ်းများကို သိမ်းထားပါမည်။ နောက်ပိုင်း ပြန်ဖွင့်ပေးနိုင်ပါသည်။",
+  reactivateStaff: "ဝင်ရောက်ခွင့် ပြန်ဖွင့်မည်",
+  reactivateStaffTitle: "ဤဝန်ထမ်း၏ ဝင်ရောက်ခွင့်ကို ပြန်ဖွင့်မလား။",
+  reactivateStaffIntro:
+    "ဤအကောင့်သည် သင့်ဆိုင်သို့ ဝန်ထမ်းဝင်ရောက်ခွင့် ပြန်ရရှိပါမည်။ ပြန်မဖွင့်မီ အကောင့်ပိုင်ရှင်ကို စစ်ဆေးပါ။",
+  deactivatedMember: "ဝင်ရောက်ခွင့် ပိတ်ထားသည်",
+  searchStaff: "ဝန်ထမ်း ရှာမည်",
+  searchLinks: "ဝင်ရောက်ရန် လင့်ခ် ရှာမည်",
+  allStatuses: "အခြေအနေအားလုံး",
+  status: "အခြေအနေ",
+  phone: "ဆက်သွယ်ရန် ဖုန်း",
+  joinedOn: "ဝင်ရောက်သည့်ရက်",
+  createdOn: "ဖန်တီးသည့်ရက်",
+  expiresOn: "သက်တမ်းကုန်မည့်ရက်",
+  actions: "လုပ်ဆောင်ချက်များ",
+  staffActions: "ဝန်ထမ်း လုပ်ဆောင်ချက်များ",
+  linkActions: "လင့်ခ် လုပ်ဆောင်ချက်များ",
+  noMatchingStaff:
+    "ရှာဖွေမှု သို့မဟုတ် အခြေအနေနှင့် ကိုက်ညီသော ဝန်ထမ်း မရှိပါ။",
+  noJoinLinks:
+    "ဝင်ရောက်ရန် လင့်ခ် မရှိသေးပါ။ ပထမဆုံး ဝန်ထမ်းထည့်ရန် လင့်ခ်ဖန်တီးပါ။",
+  noMatchingLinks: "ရှာဖွေမှု သို့မဟုတ် အခြေအနေနှင့် ကိုက်ညီသော လင့်ခ် မရှိပါ။",
+  rowsPerPage: "တစ်မျက်နှာလျှင် အတန်းများ",
+  previousPage: "ယခင်",
+  nextPage: "နောက်",
+  page: "စာမျက်နှာ",
+  of: "/",
+  linkLabel: "ဝင်ရောက်ရန် လင့်ခ်",
+  legacyInvitation: "အီးမေးလ် ဖိတ်ကြားချက်",
+  singleUseLink: "တစ်ကြိမ်သုံး လင့်ခ်",
+  linkReady: "ဝင်ရောက်ရန် လင့်ခ် အသင့်ဖြစ်ပါပြီ",
+  staffMember: "ဝန်ထမ်း",
+  optionalPhone: "ဆက်သွယ်ရန် ဖုန်း (မဖြစ်မနေ မလိုပါ)",
+  optionalPhoneIntro:
+    "ဆိုင်ပိုင်ရှင် ဆက်သွယ်ရန် ဖြစ်ပါသည်။ ဤဖုန်းနံပါတ်ဖြင့် အကောင့်ဝင်၍ မရပါ။",
+  staffJoinIntro:
+    "သင့်ကိုယ်ပိုင်အမည်၊ အီးမေးလ်နှင့် စကားဝှက်ဖြင့် ဝင်ရောက်ပါ။ ဤလင့်ခ်ကို ဝန်ထမ်းတစ်ဦးသာ အသုံးပြုနိုင်ပါသည်။",
+  invalidPhone:
+    "ဂဏန်း၊ နေရာလွတ်၊ +၊ ကွင်းစကွင်းပိတ်၊ အစက် သို့မဟုတ် မျဉ်းတိုဖြင့် စာလုံး ၃၂ လုံးအထိ ဖုန်းနံပါတ် ထည့်ပါ။",
+  staffDeactivated:
+    "ဤဆိုင်သို့ သင့်ဝင်ရောက်ခွင့် ပိတ်ထားပါသည်။ ပြန်ဖွင့်ပေးရန် ဆိုင်ပိုင်ရှင်ကို ဆက်သွယ်ပါ။ လင့်ခ်အသစ်ဖြင့် ပြန်ဝင်၍ မရပါ။",
+
   overview: "ခြုံငုံကြည့်ရန်",
   menu: "မီနူး",
   subscription: "ဝန်ဆောင်မှုသက်တမ်း",
@@ -256,6 +396,10 @@ const my: Record<keyof typeof en, string> = {
     "ကျပ်ပြည့်ဖြင့် နောက်ဆုံးဈေးနှုန်း တစ်ခုသာ။ ထပ်ဆောင်းအခများ မရှိပါ။",
   availableItem: "ရရှိနိုင်သည်",
   unavailableItem: "မရရှိနိုင်ပါ",
+  signatureItem: "ဆိုင်၏ အထူးမီနူးပစ္စည်း",
+  signature: "ဆိုင်၏ အထူးမီနူး",
+  signatureItems: "ဆိုင်၏ အထူးမီနူးများ",
+  signatureIntro: "ဤပစ္စည်းကို ဆိုင်၏ အထူးမီနူးများထဲတွင် ဦးစားပေးပြသပါ။",
   itemPhoto: "ဓာတ်ပုံ",
   photoNote: "JPEG၊ PNG သို့မဟုတ် WebP ဓာတ်ပုံ (၅ MB အထိ)။ ဖြည့်ရန်မလိုအပ်ပါ။",
   removePhoto: "ဓာတ်ပုံဖယ်ရှားမည်",
@@ -300,7 +444,7 @@ const my: Record<keyof typeof en, string> = {
   cancelInvitationTitle: "ဤဖိတ်ကြားချက်ကို ပယ်ဖျက်မလား။",
   cancelInvitation: "ဖိတ်ကြားချက် ပယ်ဖျက်မည်",
   removeAccessIntro:
-    "ဤအကောင့်သည် ဆိုင်သို့ ဝင်ရောက်ခွင့် ချက်ချင်းဆုံးရှုံးပါမည်။ ပြန်ဝင်ရန် ဖိတ်ကြားချက်အသစ် လိုအပ်ပါသည်။",
+    "ဤအကောင့်သည် ဆိုင်သို့ ဝင်ရောက်ခွင့် ချက်ချင်းဆုံးရှုံးပါမည်။ ဆိုင်ပိုင်ရှင်က နောက်ပိုင်း ပြန်ဖွင့်ပေးနိုင်ပါသည်။",
   removeAccessTitle: "ဝန်ထမ်းဝင်ရောက်ခွင့် ဖယ်ရှားမလား။",
   removeAccess: "ဝင်ရောက်ခွင့် ဖယ်ရှားမည်",
   deliveryFailed:
@@ -321,10 +465,10 @@ const my: Record<keyof typeof en, string> = {
   inviteStaff: "ဝန်ထမ်းဖိတ်ကြားမည်",
   staffEmail: "ဝန်ထမ်းအီးမေးလ်",
   staffTeamIntro:
-    "ဝန်ထမ်းတစ်ဦးစီကို ကိုယ်ပိုင်အကောင့်ဖြင့် ဖိတ်ကြားပါ။ ဖိတ်ကြားချက်များသည် ၇ ရက်အတွင်း သက်တမ်းကုန်ပါမည်။",
+    "ဝင်ရောက်ခွင့်ကို စီမံပြီး ဝန်ထမ်းအသစ်တစ်ဦးစီအတွက် တစ်ကြိမ်သုံး လင့်ခ်ကို မျှဝေပါ။",
   staffTeam: "ဝန်ထမ်းများ",
   staffRegisterIntro:
-    "သင့်ကိုယ်ပိုင်အမည်နှင့် စကားဝှက်ကို အသုံးပြုပါ။ ဤအကောင့်သည် ဖိတ်ကြားထားသောဆိုင်သို့ ဝင်ရောက်ရန် ဖြစ်သည်။",
+    "သင့်ကိုယ်ပိုင်အမည်၊ အီးမေးလ်နှင့် စကားဝှက်ကို အသုံးပြုပါ။ ဤအကောင့်သည် လင့်ခ်ပါဆိုင်သို့ ဝင်ရောက်ရန် ဖြစ်သည်။",
   staffRegisterTitle: "သင့်ဝန်ထမ်းအကောင့် ဖန်တီးပါ။",
   staffAccount: "ဝန်ထမ်းအကောင့်",
   language: "ဘာသာစကား",
@@ -377,7 +521,7 @@ const my: Record<keyof typeof en, string> = {
     "ဤဆိုင်အတွက် သင့်ကိုယ်ပိုင် ဝန်ထမ်းအကောင့်ဖြင့် ဝင်ထားပါသည်။",
   staffAccessRemoved: "ဝန်ထမ်းဝင်ရောက်ခွင့် ဖယ်ရှားထားပါသည်။",
   staffAccessRemovedIntro:
-    "သင့်ဝင်ရောက်ခွင့်ကို ဖယ်ရှားထားပါသည်။ ဖိတ်ကြားချက်အသစ်ရရန် ဆိုင်ပိုင်ရှင်ထံ ဆက်သွယ်ပါ။",
+    "သင့်ဝင်ရောက်ခွင့် ပိတ်ထားပါသည်။ ပြန်ဖွင့်ပေးရန် ဆိုင်ပိုင်ရှင်ထံ ဆက်သွယ်ပါ။",
   activeTrial: "အစမ်းသုံးကာလအတွင်း",
   expiredTrial: "အစမ်းသုံးကာလကုန်ဆုံးပြီ",
   trialEnds: "အစမ်းသုံးကာလ ကုန်ဆုံးမည့်ရက်",

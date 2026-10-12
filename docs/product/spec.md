@@ -96,8 +96,8 @@ The following approved choices translate the confirmed scope into implementable 
 ### Accounts, stores, and permissions
 
 - Atomically create one store and owner membership per owner, with a single durable trial start. Retrying creation returns the existing result. Staff invitation acceptance does not create a store or a trial.
-- Invitations are store-bound, email-bound, expiring, and single-use. Provide sign-in, sign-out, and secure password recovery with real email delivery configured before launch and a captured mail transport for tests.
-- Scope every private operation to the authenticated membership and store, with current role checks in backend functions. Revoking membership removes operational access even for an already-open tab.
+- Owners share store-bound, expiring, single-use staff join links with a 1, 3, or 7-day lifetime (default 7). Staff register with their own name, email and password and can enter an optional contact-only phone when joining. Existing email-bound invitations preserve their email restriction. Owners can revoke or regenerate links. Only token hashes persist; raw join links are returned for copying on creation or regeneration. Provide sign-in, sign-out, and secure password recovery with real email delivery configured before launch and a captured mail transport for tests.
+- Scope every private operation to the authenticated membership and store, with current role checks in backend functions. Deactivating staff removes operational access even for an already-open tab, preserves account/history, and can only be reversed by the owner. Another invitation cannot bypass the deactivation decision; reactivation rejects an existing active membership conflict.
 - For this release, account onboarding has one active store context; conflicting cross-store invitations are rejected clearly. Do not expose a multi-store switcher or multi-store creation.
 - Owners manage store settings, numbered tables, menu content, staff, billing, cancellation, refund records, and reports, and can perform all staff operations.
 - Staff can view operational menu/order data, create counter orders, receive cash, update fulfillment, and correct tables. They cannot modify menus/prices, manage users/billing, see aggregate revenue, cancel orders, record refunds, or manually mark MMQR paid.
@@ -116,16 +116,16 @@ The following approved choices translate the confirmed scope into implementable 
 
 Maintain fulfillment, collection, payment attempts, and destination independently rather than forcing every combination into one status. The order source distinguishes QR and counter behavior.
 
-| Order condition | Can start cooking? | Next action |
-| --- | --- | --- |
-| QR cash, valid selected table, pending | Yes, before cash collection | Start Cooking; cash may be collected after eating |
-| QR MMQR, payment unconfirmed | No | Await authenticated payment confirmation |
-| QR MMQR, paid and pending | Yes | Start Cooking |
-| Counter order, unpaid | No | Collect cash or confirm MMQR |
-| Counter order, paid but no table/Takeaway | No | Staff assigns destination |
-| Counter order, paid and destination assigned | Yes | Start Cooking |
-| Cancelled order | No | Preserve history and resolve any money owed |
-| Served order | Already completed | Cash collection or refund recording remains separate |
+| Order condition                              | Can start cooking?          | Next action                                          |
+| -------------------------------------------- | --------------------------- | ---------------------------------------------------- |
+| QR cash, valid selected table, pending       | Yes, before cash collection | Start Cooking; cash may be collected after eating    |
+| QR MMQR, payment unconfirmed                 | No                          | Await authenticated payment confirmation             |
+| QR MMQR, paid and pending                    | Yes                         | Start Cooking                                        |
+| Counter order, unpaid                        | No                          | Collect cash or confirm MMQR                         |
+| Counter order, paid but no table/Takeaway    | No                          | Staff assigns destination                            |
+| Counter order, paid and destination assigned | Yes                         | Start Cooking                                        |
+| Cancelled order                              | No                          | Preserve history and resolve any money owed          |
+| Served order                                 | Already completed           | Cash collection or refund recording remains separate |
 
 - Create a durable immutable order before initiating payment. The submission idempotency key survives reconnects, reloads, and uncertain responses; reusing the same key for different content is rejected.
 - QR submission requires the selected table and payment method. Counter submission initially has no destination; after payment staff chooses a table or Takeaway. A paid-but-unassigned counter order remains prominently visible and recoverable.

@@ -46,6 +46,7 @@ export const read = query({
               description: item.description,
               price: item.price,
               available: item.available,
+              signature: item.signature ?? false,
               photoUrl:
                 photo?.storeId === storeId
                   ? await ctx.storage.getUrl(photo.storageId)

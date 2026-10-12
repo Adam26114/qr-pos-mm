@@ -17,6 +17,7 @@ test("a logged-out guest sees only public menu and active tables for the request
     description: "နို့ပါသည် · With milk",
     price: 2500,
     available: false,
+    signature: true,
     photoId: null,
   })
   const tableId = await owner.mutation(api.tables.add, { storeId, number: 4 })
@@ -40,6 +41,7 @@ test("a logged-out guest sees only public menu and active tables for the request
     description: "Private to this menu",
     price: 9000,
     available: true,
+    signature: true,
     photoId: null,
   })
   expect(await t.query(api.publicMenu.read, { storeId })).toEqual({
@@ -53,6 +55,7 @@ test("a logged-out guest sees only public menu and active tables for the request
         description: "နို့ပါသည် · With milk",
         price: 2500,
         available: false,
+        signature: true,
         photoUrl: null,
       },
     ],
@@ -113,6 +116,7 @@ test("the guest menu reflects photos, final price changes and removal without ex
       description: "With butter",
       price: 1500,
       available: true,
+      signature: false,
       photoUrl: expect.stringMatching(/^https?:\/\//),
     },
   ])
@@ -134,4 +138,76 @@ test("the guest menu reflects photos, final price changes and removal without ex
     tables: [],
   })
   expect(await t.query(api.publicMenu.read, { storeId: categoryId })).toBeNull()
+})
+
+test("public menus normalize legacy signature flags and reflect multiple owner selections and removal", async () => {
+  const t = backend()
+  const owner = await authenticate(t, "public-signature@example.com")
+  const storeId = await owner.mutation(api.stores.create, { name: "Parison" })
+  const drinks = await owner.mutation(api.menu.saveCategory, {
+    storeId,
+    name: "Drinks",
+  })
+  const food = await owner.mutation(api.menu.saveCategory, {
+    storeId,
+    name: "Food",
+  })
+  const values = {
+    storeId,
+    categoryId: drinks,
+    name: "Parison coffee",
+    description: "The store's signature coffee",
+    price: 3000,
+    available: true,
+    photoId: null,
+  }
+  const first = await owner.mutation(api.menu.saveItem, {
+    ...values,
+    signature: true,
+  })
+  const second = await owner.mutation(api.menu.saveItem, {
+    ...values,
+    categoryId: food,
+    name: "Parison toast",
+    available: false,
+    signature: true,
+  })
+  const legacy = await t.run((ctx) =>
+    ctx.db.insert("menuItems", { ...values, name: "Americano" })
+  )
+  const menu = (await t.query(api.publicMenu.read, { storeId }))!
+  expect(menu.items.find((item) => item._id === legacy)).toEqual({
+    _id: legacy,
+    categoryId: drinks,
+    name: "Americano",
+    description: values.description,
+    price: 3000,
+    available: true,
+    signature: false,
+    photoUrl: null,
+  })
+  expect(
+    menu.items.filter((item) => item.signature).map((item) => item._id)
+  ).toEqual([first, second])
+  expect(menu.items.find((item) => item._id === second)).toMatchObject({
+    signature: true,
+    available: false,
+  })
+
+  await owner.mutation(api.menu.saveItem, {
+    ...values,
+    itemId: first,
+    signature: false,
+  })
+  expect(
+    (await t.query(api.publicMenu.read, { storeId }))!.items
+      .filter((item) => item.signature)
+      .map((item) => item._id)
+  ).toEqual([second])
+  await owner.mutation(api.menu.removeItem, { storeId, itemId: second })
+  await owner.mutation(api.menu.removeCategory, { storeId, categoryId: food })
+  const afterRemoval = (await t.query(api.publicMenu.read, { storeId }))!
+  expect(afterRemoval.categories).toEqual([{ _id: drinks, name: "Drinks" }])
+  expect(afterRemoval.items.some((item) => item.signature)).toBe(false)
+  expect(afterRemoval.items.map((item) => item._id)).toEqual([first, legacy])
 })

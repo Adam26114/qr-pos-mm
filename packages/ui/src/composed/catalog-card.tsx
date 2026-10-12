@@ -11,6 +11,7 @@ export function CatalogCard({
   actions,
   compact = false,
   tools,
+  headingLevel = 3,
 }: {
   title: string
   description?: string
@@ -20,7 +21,9 @@ export function CatalogCard({
   actions: ReactNode
   compact?: boolean
   tools?: ReactNode
+  headingLevel?: 3 | 4
 }) {
+  const Heading = headingLevel === 4 ? "h4" : "h3"
   return (
     <Card className="h-full min-w-0 gap-0 overflow-hidden py-0">
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
@@ -33,7 +36,9 @@ export function CatalogCard({
         className={cn("flex flex-1 flex-col gap-3 p-4", compact && "gap-2 p-3")}
       >
         <div className="min-w-0 flex-1">
-          <h3 className="font-medium [overflow-wrap:anywhere]">{title}</h3>
+          <Heading className="font-medium [overflow-wrap:anywhere]">
+            {title}
+          </Heading>
           {description && (
             <p className="mt-1 text-xs [overflow-wrap:anywhere] text-muted-foreground">
               {description}
@@ -48,9 +53,8 @@ export function CatalogCard({
         >
           <span
             className={cn(
-              "font-medium tabular-nums",
-              compact &&
-                "min-w-0 [overflow-wrap:anywhere] text-muted-foreground"
+              "max-w-full min-w-0 font-medium [overflow-wrap:anywhere] tabular-nums",
+              compact && "text-muted-foreground"
             )}
           >
             {price}

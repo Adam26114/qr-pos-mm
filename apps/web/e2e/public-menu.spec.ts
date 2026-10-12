@@ -5,6 +5,7 @@ import jsQR from "jsqr"
 test("owner downloads one scannable menu QR and logged-out guests see live changes on a phone", async ({
   page,
   browser,
+  baseURL,
 }) => {
   test.setTimeout(90_000)
   const errors: string[] = []
@@ -54,11 +55,12 @@ test("owner downloads one scannable menu QR and logged-out guests see live chang
   const qrDialog = page.getByRole("dialog", { name: "Menu QR", exact: true })
   await expect(
     qrDialog.getByRole("link", { name: "Open customer menu", exact: true })
-  ).toHaveAttribute("href", /^http:\/\/localhost:3000\/menu\/[^/?#]+$/)
+  ).toHaveAttribute("href", /^http:\/\/localhost:\d+\/menu\/[^/?#]+$/)
   const menuUrl = await qrDialog
     .getByRole("link", { name: "Open customer menu", exact: true })
     .getAttribute("href")
-  expect(menuUrl).toMatch(/^http:\/\/localhost:3000\/menu\/[^/?#]+$/)
+  expect(new URL(menuUrl!).origin).toBe(new URL(baseURL!).origin)
+  expect(new URL(menuUrl!).pathname).toMatch(/^\/menu\/[^/?#]+$/)
   await expect(
     qrDialog.getByRole("img", { name: "Store menu QR", exact: true })
   ).toBeVisible()
@@ -83,6 +85,7 @@ test("owner downloads one scannable menu QR and logged-out guests see live chang
   await qrDialog.getByRole("button", { name: "Close", exact: true }).click()
 
   const guestContext = await browser.newContext({
+    baseURL,
     viewport: { width: 390, height: 844 },
   })
   try {

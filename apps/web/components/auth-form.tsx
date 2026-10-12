@@ -32,7 +32,7 @@ export function AuthForm({
 }: {
   mode: Mode
   token?: string
-  invitation?: { token: string; email: string }
+  invitation?: { token: string; email?: string }
   onModeChange?: (mode: "register" | "login") => void
 }) {
   const { copy } = useCopy()
@@ -270,7 +270,7 @@ export function AuthForm({
               label={field.label}
               type={field.type}
               autoComplete={field.autoComplete}
-              readOnly={!!invitation && field.key === "email"}
+              readOnly={!!invitation?.email && field.key === "email"}
               {...register(field.key)}
               error={
                 errors[field.key]
